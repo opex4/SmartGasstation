@@ -1,3 +1,18 @@
 <resources>
-    <string name="app_name">SmartGasstation</string>
+
+    <string name="app_name">Smart Gasstation</string>
+
+    <string name="main_menu_add_refuel">Записать заправку</string>
+
+    <string name="main_activity_history">История заправок</string>
+
+    <string name="add_refuel_activity_add_refuel_btn">Записать заправку</string>
+    <string name="add_refuel_activity_find_best_refuel_tv">Расчёт лучшей заправки</string>
+    <string name="add_refuel_activity_find_best_refuel_btn">Найти лучшую заправку</string>
+    <string name="add_refuel_activity_fuel_consumption_et">Расход топлива (л/100км)</string>
+    <string name="add_refuel_activity_odometer_et">Текущий пробег (км)</string>
+    <string name="add_refuel_activity_fuel_amount_et">Количество топлива (л)</string>
+    <string name="add_refuel_activity_fuel_type_et">Тип топлива (АИ-95, АИ-92, ДТ...)</string>
+    <string name="add_refuel_activity_return_btn">Назад</string>
+
 </resources>

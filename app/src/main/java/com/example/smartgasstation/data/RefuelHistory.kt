@@ -1,6 +1,6 @@
 package com.example.smartgasstation.data
 
-class RefuelHistory {
+object RefuelHistory {
 
     private val refuelRecords = mutableListOf<RefuelRecord>()
     private var nextId = 1
