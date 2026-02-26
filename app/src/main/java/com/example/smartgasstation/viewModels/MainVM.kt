@@ -1,13 +1,17 @@
 package com.example.smartgasstation.viewModels
 
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.smartgasstation.data.RefuelHistory
 import com.example.smartgasstation.data.RefuelRecord
+import com.example.smartgasstation.storages.RefuelHistoryFileManager
+import android.app.Application
 
-class MainVM : ViewModel(){
-    private val refuelHistory = RefuelHistory
+class MainVM(application: Application) : AndroidViewModel(application){
+    private var refuelHistory = RefuelHistory()
+    private val fileManager = RefuelHistoryFileManager(application)
 
     // LiveData для записей заправок
     private val _refuelRecords = MutableLiveData<List<RefuelRecord>>(refuelHistory.getHistory())
@@ -61,6 +65,33 @@ class MainVM : ViewModel(){
 
     fun updateRefuelRecord(position: Int, fuelAmount: Double, odometer: Double) {
         refuelHistory.updateRefuelRecord(position, fuelAmount, odometer)
+        refreshData()
+    }
+
+    fun saveToTxt(){
+        fileManager.saveToTxt(refuelHistory, "RefuelHistoryTxt")
+    }
+
+    fun saveToXls(){
+        fileManager.saveToXls(refuelHistory, "RefuelHistoryXls")
+    }
+
+    fun saveToPdf(){
+        fileManager.saveToPdf(refuelHistory, "RefuelHistoryPdf")
+    }
+
+    fun loadFromTxt(){
+        refuelHistory = fileManager.loadFromTxt("RefuelHistoryTxt")
+        refreshData()
+    }
+
+    fun loadFromXls(){
+        refuelHistory = fileManager.loadFromXls("RefuelHistoryXls")
+        refreshData()
+    }
+
+    fun loadFromPdf(){
+        refuelHistory = fileManager.loadFromPdf("RefuelHistoryPdf")
         refreshData()
     }
 }

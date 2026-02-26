@@ -1,9 +1,12 @@
 package com.example.smartgasstation
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -25,6 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private val mainVM: MainVM by viewModels()
     private lateinit var adapter: MainAdapter
+    private lateinit var filesButton: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -174,6 +178,78 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.main_recycler_view)
         consumptionText = findViewById(R.id.main_activity_consumption_tv)
         consumptionText.text = mainVM.calculateAverageConsumption()
+        filesButton = findViewById(R.id.main_activity_files_btn)
+        filesButton.setOnClickListener {
+            saveAndLoadFiles()
+        }
+    }
+
+    @SuppressLint("MissingInflatedId")
+    private fun saveAndLoadFiles() {
+        val saveAndLoadFilesLayout = layoutInflater.inflate(R.layout.dialog_work_with_files, null)
+
+        val saveToTxt = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnSaveTxt)
+        val saveToXls = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnSaveXls)
+        val saveToPdf = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnSavePdf)
+
+        val loadFromTxt = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadTxt)
+        val loadFromXls = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadXls)
+        val loadFromPdf = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadPdf)
+
+        AlertDialog.Builder(this)
+            .setTitle("Работа с файлами")
+            .setView(saveAndLoadFilesLayout)
+            .show()
+            .apply {
+                saveToTxt.setOnClickListener {
+                    try {
+                        mainVM.saveToTxt()
+                        Toast.makeText(this@MainActivity, "Файл сохранён", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception){
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                saveToXls.setOnClickListener {
+                    try {
+                        mainVM.saveToXls()
+                        Toast.makeText(this@MainActivity, "Файл сохранён", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception){
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                saveToPdf.setOnClickListener {
+                    try {
+                        mainVM.saveToPdf()
+                        Toast.makeText(this@MainActivity, "Файл сохранён", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception){
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                loadFromTxt.setOnClickListener {
+                    try {
+                        mainVM.loadFromTxt()
+                        Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception){
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                loadFromXls.setOnClickListener {
+                    try {
+                        mainVM.loadFromXls()
+                        Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception){
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                loadFromPdf.setOnClickListener {
+                    try {
+                        mainVM.loadFromPdf()
+                        Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception){
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
     }
 
     private fun updateHistoryDisplay(updatedList: List<RefuelRecord>) {

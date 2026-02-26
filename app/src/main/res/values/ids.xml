@@ -7,4 +7,5 @@
     <item name="resultText" type="id" />
     <item name="refuelButton" type="id" />
     <item name="historyText" type="id" />
+    <item name="tvTitle" type="id" />
 </resources>

@@ -7,6 +7,7 @@
 
     <string name="main_activity_history">История заправок</string>
     <string name="main_activity_consumption">Расход топлива: </string>
+    <string name="main_activity_files_btn">Работа с файлами</string>
 
     <string name="add_refuel_activity_add_refuel_btn">Записать заправку</string>
     <string name="add_refuel_activity_find_best_refuel_tv">Расчёт лучшей заправки</string>
