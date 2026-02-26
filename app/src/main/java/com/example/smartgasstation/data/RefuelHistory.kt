@@ -3,46 +3,125 @@ package com.example.smartgasstation.data
 object RefuelHistory {
 
     private val refuelRecords = mutableListOf<RefuelRecord>()
-    private var nextId = 1
+
+    // Удаление записи
+    fun deleteRefuelRecords(position: Int){
+        // Проверка корректности индекса
+        if (position < 0 || position >= refuelRecords.size) {
+            throw Exception("Некорректный индекс записи")
+        }
+
+        refuelRecords.removeAt(position)
+    }
+
+    // Обновление записи
+    fun updateRefuelRecord(position: Int, fuelAmount: Double, odometer: Double) {
+        // Проверка валидности входных данных
+        if (fuelAmount <= 0) {
+            throw Exception("Количество топлива должно быть больше 0")
+        }
+
+        if (odometer < 0) {
+            throw Exception("Пробег не может быть отрицательным")
+        }
+
+        // Проверка, что список не пуст
+        if (refuelRecords.isEmpty()) {
+            throw Exception("Список заправок пуст")
+        }
+
+        // Проверка корректности индекса
+        if (position < 0 || position >= refuelRecords.size) {
+            throw Exception("Некорректный индекс записи")
+        }
+
+        // Проверка соблюдения последовательности пробегов
+        when (position) {
+            0 -> { // Первая запись
+                if (refuelRecords.size > 1) {
+                    val nextRecord = refuelRecords[1]
+                    if (odometer >= nextRecord.odometer) {
+                        throw Exception("Пробег первой записи должен быть меньше пробега следующей записи")
+                    }
+                }
+            }
+            refuelRecords.lastIndex -> { // Последняя запись
+                if (refuelRecords.size > 1) {
+                    val previousRecord = refuelRecords[refuelRecords.lastIndex - 1]
+                    if (odometer <= previousRecord.odometer) {
+                        throw Exception("Пробег последней записи должен быть больше пробега предыдущей записи")
+                    }
+                }
+            }
+            else -> { // Запись в середине списка
+                val previousRecord = refuelRecords[position - 1]
+                val nextRecord = refuelRecords[position + 1]
+
+                if (odometer <= previousRecord.odometer) {
+                    throw Exception("Пробег текущей записи должен быть больше пробега предыдущей записи")
+                }
+
+                if (odometer >= nextRecord.odometer) {
+                    throw Exception("Пробег текущей записи должен быть меньше пробега следующей записи")
+                }
+            }
+        }
+
+        // Обновляем запись
+        val updatedRecord = RefuelRecord(
+            fuelAmount = fuelAmount,
+            odometer = odometer,
+            timestamp = refuelRecords[position].timestamp
+        )
+        refuelRecords[position] = updatedRecord
+    }
 
     fun addRefuelRecord(fuelAmount: Double, odometer: Double) {
-        val record = RefuelRecord(id = nextId++, fuelAmount = fuelAmount, odometer = odometer)
-        refuelRecords.add(record)
+        // Проверка валидности входных данных
+        if (fuelAmount <= 0) {
+            throw Exception("Количество топлива должно быть больше 0")
+        }
+
+        if (odometer < 0) {
+            throw Exception("Пробег не может быть отрицательным")
+        }
+
+        if (refuelRecords.isEmpty()){
+            val record = RefuelRecord(fuelAmount = fuelAmount, odometer = odometer)
+            refuelRecords.add(record)
+        } else {
+            if(refuelRecords.last().odometer < odometer){
+                val record = RefuelRecord(fuelAmount = fuelAmount, odometer = odometer)
+                refuelRecords.add(record)
+            } else {
+                throw Exception("Пробег текущей записи должен быть больше пробега предыдущей записи)")
+            }
+        }
     }
 
     fun getHistory(): List<RefuelRecord> {
         return refuelRecords.toList()
     }
 
-    fun getLastOdometer(): Double? {
-        return if (refuelRecords.isNotEmpty()) {
-            refuelRecords.maxByOrNull { it.odometer }?.odometer
+    fun getLastOdometer(): Double {
+        if (refuelRecords.isNotEmpty()) {
+            return refuelRecords.last().odometer
         } else {
-            null
+            throw Exception("Список заправок пуст")
         }
     }
 
     fun calculateAverageConsumption(): Double {
         // Для расчета расхода нужно минимум 2 записи о заправках
-        if (refuelRecords.size < 2) return 0.0
-
-        // Сортируем записи по пробегу (по возрастанию)
-        val sortedRecords = refuelRecords.sortedBy { it.odometer }
-
-        // Проверяем, что все пробеги идут по возрастанию
-        for (i in 1 until sortedRecords.size) {
-            if (sortedRecords[i].odometer <= sortedRecords[i-1].odometer) {
-                return 0.0 // Нарушена последовательность пробегов
-            }
+        if (refuelRecords.size < 2){
+            throw Exception("Для расчета расхода нужно минимум 2 записи о заправках")
         }
 
         // Суммируем все заправки топлива, кроме последней
-        val totalFuel = sortedRecords.dropLast(1).sumOf { it.fuelAmount }
+        val totalFuel = refuelRecords.dropLast(1).sumOf { it.fuelAmount }
 
         // Общий пробег = последний пробег - первый пробег
-        val totalDistance = sortedRecords.last().odometer - sortedRecords.first().odometer
-
-        if (totalDistance <= 0) return 0.0
+        val totalDistance = refuelRecords.last().odometer - refuelRecords.first().odometer
 
         // Расход в л/100км
         return (totalFuel / totalDistance) * 100
@@ -50,6 +129,5 @@ object RefuelHistory {
 
     fun clearHistory() {
         refuelRecords.clear()
-        nextId = 1
     }
 }

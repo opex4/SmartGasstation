@@ -7,12 +7,15 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.smartgasstation.data.BestStationResult
 import com.example.smartgasstation.data.GasStation
 import com.example.smartgasstation.data.RefuelHistory
+import com.example.smartgasstation.viewModels.AddRefuelVM
+import com.example.smartgasstation.viewModels.MainVM
 import java.util.Locale
 
 class AddRefuelActivity : AppCompatActivity() {
@@ -27,30 +30,8 @@ class AddRefuelActivity : AppCompatActivity() {
     private lateinit var calculateButton: Button
     private lateinit var refuelButton: Button
     private lateinit var returnButton: Button
-    // Список заправок
-    private val gasStations = listOf(
-        GasStation(
-            id = 1,
-            name = "Лукойл №1",
-            fuelPrice = 50.5,
-            distance = 2.5,
-            availableFuels = listOf("АИ-95", "АИ-92", "ДТ")
-        ),
-        GasStation(
-            id = 2,
-            name = "Роснефть №2",
-            fuelPrice = 49.8,
-            distance = 5.0,
-            availableFuels = listOf("АИ-95", "АИ-92", "ДТ", "Газ")
-        ),
-        GasStation(
-            id = 3,
-            name = "Газпромнефть №3",
-            fuelPrice = 51.2,
-            distance = 1.0,
-            availableFuels = listOf("АИ-95", "АИ-98", "ДТ")
-        )
-    )
+
+    private val addRefuelVM: AddRefuelVM by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,29 +68,6 @@ class AddRefuelActivity : AppCompatActivity() {
         returnButton.setOnClickListener {
             goToMainActivity()
         }
-    }
-
-    // Поиск лучшей заправки
-    private fun findBestGasStation(fuelType: String, fuelAmount: Double, fuelConsumption: Double): BestStationResult? {
-        // Фильтруем заправки по типу топлива
-        val suitableStations = gasStations.filter { station ->
-            station.availableFuels.any { it.contains(fuelType, ignoreCase = true) }
-        }
-
-        if (suitableStations.isEmpty()) return null
-
-        // Рассчитываем стоимость для каждой подходящей заправки
-        val stationsWithCost = suitableStations.map { station ->
-            val fuelCost = station.fuelPrice * fuelAmount
-            val tripFuel = (station.distance * fuelConsumption) / 100
-            val tripCost = tripFuel * station.fuelPrice
-            val totalCost = fuelCost + tripCost
-
-            BestStationResult(station, tripCost, totalCost)
-        }
-
-        // Возвращаем заправку с минимальной общей стоимостью
-        return stationsWithCost.minByOrNull { it.totalCost }
     }
 
     // Записать заправку
@@ -171,17 +129,10 @@ class AddRefuelActivity : AppCompatActivity() {
             val consumption = consumptionText.toDouble()
 
             // Поиск лучшей заправки
-            val bestStation = findBestGasStation(fuelType, fuelAmount, consumption)
+            val bestStation = addRefuelVM.calculateBestGasStation(fuelType, fuelAmount, consumption)
 
             if (bestStation != null) {
-                val result = """
-                    Лучшая заправка: ${bestStation.station.name}
-                    Цена за литр: ${bestStation.station.fuelPrice} руб.
-                    Расстояние: ${bestStation.station.distance} км
-                    Стоимость поездки: ${String.format("%.2f", bestStation.tripCost)} руб.
-                    Общая стоимость: ${String.format("%.2f", bestStation.totalCost)} руб.
-                """.trimIndent()
-                resultText.text = result
+                resultText.text = bestStation
             } else {
                 resultText.text = "Не найдено подходящих заправок"
             }
