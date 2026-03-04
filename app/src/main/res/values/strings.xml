@@ -21,4 +21,9 @@
     <string name="main_recycler_view_fuel_amount">Топливо (л): </string>
     <string name="main_recycler_view_odometer">Пробег (км): </string>
     <string name="main_recycler_view_date">Дата: </string>
+    <string name="file_load_xls">Загрузить XLS</string>
+    <string name="file_save_pdf">Сохранить PDF</string>
+    <string name="file_save_xls">Сохранить XLS</string>
+    <string name="file_load_txt">Загрузить TXT</string>
+    <string name="file_save_txt">Сохранить TXT</string>
 </resources>

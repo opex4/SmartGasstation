@@ -17,7 +17,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Сохранить TXT"
+            android:text="@string/file_save_txt"
             android:layout_marginEnd="8dp"/>
 
         <Button
@@ -25,7 +25,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Загрузить TXT"
+            android:text="@string/file_load_txt"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 
@@ -40,7 +40,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Сохранить XLS"
+            android:text="@string/file_save_xls"
             android:layout_marginEnd="8dp"/>
 
         <Button
@@ -48,7 +48,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Загрузить XLS"
+            android:text="@string/file_load_xls"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 
@@ -62,7 +62,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Сохранить PDF"
+            android:text="@string/file_save_pdf"
             android:layout_marginEnd="8dp"/>
     </LinearLayout>
 
