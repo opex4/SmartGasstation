@@ -1,6 +1,5 @@
 package com.example.smartgasstation.viewModels
 
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,7 +9,7 @@ import com.example.smartgasstation.storages.RefuelHistoryFileManager
 import android.app.Application
 
 class MainVM(application: Application) : AndroidViewModel(application){
-    private var refuelHistory = RefuelHistory()
+    private var refuelHistory = RefuelHistory
     private val fileManager = RefuelHistoryFileManager(application)
 
     // LiveData для записей заправок
@@ -81,17 +80,12 @@ class MainVM(application: Application) : AndroidViewModel(application){
     }
 
     fun loadFromTxt(){
-        refuelHistory = fileManager.loadFromTxt("RefuelHistoryTxt")
+        fileManager.loadFromTxt("RefuelHistoryTxt")
         refreshData()
     }
 
     fun loadFromXls(){
-        refuelHistory = fileManager.loadFromXls("RefuelHistoryXls")
-        refreshData()
-    }
-
-    fun loadFromPdf(){
-        refuelHistory = fileManager.loadFromPdf("RefuelHistoryPdf")
+        fileManager.loadFromXls("RefuelHistoryXls")
         refreshData()
     }
 }

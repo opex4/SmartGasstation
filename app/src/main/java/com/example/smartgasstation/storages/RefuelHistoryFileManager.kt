@@ -1,18 +1,20 @@
 package com.example.smartgasstation.storages
 
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
 import com.example.smartgasstation.data.RefuelHistory
-import com.example.smartgasstation.data.RefuelRecord
-import com.itextpdf.kernel.pdf.*
-import com.itextpdf.layout.Document
-import com.itextpdf.layout.element.Paragraph
-import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
+import org.apache.poi.ss.usermodel.Workbook
 import java.io.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 class RefuelHistoryFileManager(private val context: Context) {
 
-    // txt файл
+    private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
+
+    // TXT
     fun saveToTxt(history: RefuelHistory, fileName: String) {
         val file = File(context.filesDir, "$fileName.txt")
 
@@ -25,7 +27,8 @@ class RefuelHistoryFileManager(private val context: Context) {
 
     fun loadFromTxt(fileName: String): RefuelHistory {
         val file = File(context.filesDir, "$fileName.txt")
-        val history = RefuelHistory()
+        val history = RefuelHistory
+        RefuelHistory.clearHistory()
 
         if (!file.exists()) return history
 
@@ -34,44 +37,38 @@ class RefuelHistoryFileManager(private val context: Context) {
             if (parts.size == 3) {
                 val fuel = parts[0].toDouble()
                 val odo = parts[1].toDouble()
-                val timestamp = parts[2].toLong()
-
-                history.addRecordFromFile(
-                    RefuelRecord(fuel, odo, timestamp)
-                )
+                history.addRefuelRecord(fuel, odo)
             }
         }
 
         return history
     }
 
-    // xls файл
+    // XLS
     fun saveToXls(history: RefuelHistory, fileName: String) {
+        val workbook: Workbook = HSSFWorkbook()
+        val sheet = workbook.createSheet("Refuel History")
 
-        val workbook = HSSFWorkbook()
-        val sheet = workbook.createSheet("RefuelHistory")
+        val records = history.getHistory()
 
-        history.getHistory().forEachIndexed { index, record ->
+        records.forEachIndexed { index, record ->
             val row = sheet.createRow(index)
-
             row.createCell(0).setCellValue(record.fuelAmount)
             row.createCell(1).setCellValue(record.odometer)
-            row.createCell(2).setCellValue(record.timestamp.toDouble())
+            row.createCell(2).setCellValue(dateFormat.format(Date(record.timestamp)))
         }
 
         val file = File(context.filesDir, "$fileName.xls")
-
         FileOutputStream(file).use {
             workbook.write(it)
         }
-
         workbook.close()
     }
 
     fun loadFromXls(fileName: String): RefuelHistory {
-
         val file = File(context.filesDir, "$fileName.xls")
-        val history = RefuelHistory()
+        val history = RefuelHistory
+        history.clearHistory()
 
         if (!file.exists()) return history
 
@@ -82,11 +79,7 @@ class RefuelHistoryFileManager(private val context: Context) {
             for (row in sheet) {
                 val fuel = row.getCell(0).numericCellValue
                 val odo = row.getCell(1).numericCellValue
-                val timestamp = row.getCell(2).numericCellValue.toLong()
-
-                history.addRecordFromFile(
-                    RefuelRecord(fuel, odo, timestamp)
-                )
+                history.addRefuelRecord(fuel, odo)
             }
 
             workbook.close()
@@ -95,75 +88,36 @@ class RefuelHistoryFileManager(private val context: Context) {
         return history
     }
 
-    // pdf файл
+    // PDF
     fun saveToPdf(history: RefuelHistory, fileName: String) {
 
-        val file = File(context.filesDir, "$fileName.pdf")
-        val writer = PdfWriter(file)
-        val pdf = PdfDocument(writer)
-        val document = Document(pdf)
+        val document = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = document.startPage(pageInfo)
 
-        document.add(Paragraph("REFUEL_HISTORY_START"))
+        val canvas = page.canvas
+        val paint = Paint()
+        paint.textSize = 14f
+
+        var yPosition = 40
+
+        canvas.drawText("История заправок", 40f, yPosition.toFloat(), paint)
+        yPosition += 30
 
         history.getHistory().forEach {
-            document.add(
-                Paragraph("${it.fuelAmount};${it.odometer};${it.timestamp}")
-            )
+            val line = "Топливо: ${it.fuelAmount} л | Пробег: ${it.odometer} км | ${
+                dateFormat.format(
+                    Date(it.timestamp)
+                )
+            }"
+            canvas.drawText(line, 40f, yPosition.toFloat(), paint)
+            yPosition += 25
         }
 
-        document.add(Paragraph("REFUEL_HISTORY_END"))
-
-        document.close()
-    }
-
-    fun loadFromPdf(fileName: String): RefuelHistory {
+        document.finishPage(page)
 
         val file = File(context.filesDir, "$fileName.pdf")
-        val history = RefuelHistory()
-
-        if (!file.exists()) return history
-
-        val pdf = PdfDocument(PdfReader(file))
-        val text = StringBuilder()
-
-        for (i in 1..pdf.numberOfPages) {
-            text.append(
-                PdfTextExtractor.getTextFromPage(pdf.getPage(i))
-            )
-        }
-
-        pdf.close()
-
-        val lines = text.toString().split("\n")
-        var reading = false
-
-        for (line in lines) {
-
-            when {
-                line.contains("REFUEL_HISTORY_START") -> {
-                    reading = true
-                    continue
-                }
-                line.contains("REFUEL_HISTORY_END") -> break
-            }
-
-            if (reading) {
-                val parts = line.trim().split(";")
-                if (parts.size == 3) {
-
-                    val fuel = parts[0].toDoubleOrNull()
-                    val odo = parts[1].toDoubleOrNull()
-                    val timestamp = parts[2].toLongOrNull()
-
-                    if (fuel != null && odo != null && timestamp != null) {
-                        history.addRecordFromFile(
-                            RefuelRecord(fuel, odo, timestamp)
-                        )
-                    }
-                }
-            }
-        }
-
-        return history
+        document.writeTo(FileOutputStream(file))
+        document.close()
     }
 }

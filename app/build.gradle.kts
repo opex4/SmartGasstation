@@ -47,5 +47,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.poi)
     implementation(libs.poi.ooxml)
-    implementation(libs.itext7.core)
 }

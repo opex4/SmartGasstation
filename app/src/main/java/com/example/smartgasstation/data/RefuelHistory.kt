@@ -1,6 +1,6 @@
 package com.example.smartgasstation.data
 
-class RefuelHistory {
+object RefuelHistory {
 
     private var refuelRecords = mutableListOf<RefuelRecord>()
 
@@ -97,24 +97,6 @@ class RefuelHistory {
                 throw Exception("Пробег текущей записи должен быть больше пробега предыдущей записи)")
             }
         }
-    }
-
-    fun addRecordFromFile(record: RefuelRecord) {
-
-        // Если список пуст — просто добавляем
-        if (refuelRecords.isEmpty()) {
-            refuelRecords.add(record)
-            return
-        }
-
-        // Проверка последовательности пробега
-        val lastOdometer = refuelRecords.last().odometer
-
-        if (record.odometer <= lastOdometer) {
-            throw Exception("Нарушена последовательность пробега при загрузке из файла")
-        }
-
-        refuelRecords.add(record)
     }
 
     fun getHistory(): List<RefuelRecord> {

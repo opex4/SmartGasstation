@@ -194,7 +194,6 @@ class MainActivity : AppCompatActivity() {
 
         val loadFromTxt = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadTxt)
         val loadFromXls = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadXls)
-        val loadFromPdf = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadPdf)
 
         AlertDialog.Builder(this)
             .setTitle("Работа с файлами")
@@ -236,14 +235,6 @@ class MainActivity : AppCompatActivity() {
                 loadFromXls.setOnClickListener {
                     try {
                         mainVM.loadFromXls()
-                        Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
-                    }
-                }
-                loadFromPdf.setOnClickListener {
-                    try {
-                        mainVM.loadFromPdf()
                         Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception){
                         Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
