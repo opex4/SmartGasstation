@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartgasstation.adapters.MainAdapter
-import com.example.smartgasstation.data.RefuelRecord
+import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.adapters.SwipeToActionCallback
 import com.example.smartgasstation.viewModels.MainVM
 import com.google.android.material.textfield.TextInputEditText
@@ -30,9 +30,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: MainAdapter
     private lateinit var filesButton: ImageButton
 
+    private var lastOdometer: Double? = null
+    private var avgConsumption: Double? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        initializeViews()
         initObserves()
 
         if(intent.hasExtra("fuel_amount") && intent.hasExtra("odometer")){
@@ -49,13 +53,26 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Ошибка сохранения записи", Toast.LENGTH_SHORT).show()
             }
         }
-
-        initializeViews()
     }
 
     private fun initObserves() {
         mainVM.refuelRecords.observe(this) { records ->
             updateHistoryDisplay(records)
+        }
+
+        mainVM.lastOdometer.observe(this) {
+            lastOdometer = it
+        }
+
+        mainVM.avgConsumption.observe(this) { avg ->
+            // Средний расход
+            avgConsumption = avg
+            if (avg == null) {
+                consumptionText.text = "Нет данных о заправках"
+            } else {
+                consumptionText.text =
+                    "Средний расход: %.2f л/100км".format(avg)
+            }
         }
     }
 
@@ -72,7 +89,8 @@ class MainActivity : AppCompatActivity() {
                     .setMessage("Вы действительно хотите удалить запись о заправке?")
                     .setPositiveButton("Да") { _, _ ->
                         try {
-                            mainVM.deleteRefuelRecord(position)
+                            val record = adapter.getCurrentRefuelRecord(position)
+                            mainVM.deleteRefuelRecord(record)
                         } catch (e: Exception){
                             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
                         }
@@ -109,7 +127,14 @@ class MainActivity : AppCompatActivity() {
                         val fuelDouble = fuelStr.toDouble()
                         val odometerDouble = odometerStr.toDouble()
 
-                        mainVM.updateRefuelRecord(position, fuelDouble, odometerDouble)
+                        val record = adapter.getCurrentRefuelRecord(position)
+
+                        mainVM.updateRefuelRecord(
+                            record,
+                            fuelDouble,
+                            odometerDouble
+                        )
+
                         dialog.dismiss()
                     } catch (e: NumberFormatException) {
                         Toast.makeText(this@MainActivity, "Введите корректные числа", Toast.LENGTH_SHORT).show()
@@ -156,28 +181,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun goToAddRefuelActivity() {
         val intent = Intent(this, AddRefuelActivity::class.java)
-
-        try {
-            val avgConsumption = mainVM.calculateAvgConsumption()
-            intent.putExtra("average_consumption", avgConsumption)
-        } catch (e: Exception){
-            intent.putExtra("average_consumption", 0.0)
-        }
-
-        try {
-            val lastOdometer = mainVM.getLastOdometer()
-            intent.putExtra("last_odometer", lastOdometer)
-        } catch (e: Exception){
-            intent.putExtra("last_odometer", -1.0)
-        }
-
+        intent.putExtra(
+            "average_consumption",
+            mainVM.avgConsumption.value ?: 0.0
+        )
+        intent.putExtra(
+            "last_odometer",
+            mainVM.lastOdometer.value ?: -1.0
+        )
         startActivity(intent)
     }
 
     private fun initializeViews() {
         recyclerView = findViewById(R.id.main_recycler_view)
         consumptionText = findViewById(R.id.main_activity_consumption_tv)
-        consumptionText.text = mainVM.calculateAverageConsumption()
+        consumptionText.text = "Нет данных о заправках"
         filesButton = findViewById(R.id.main_activity_files_btn)
         filesButton.setOnClickListener {
             saveAndLoadFiles()
@@ -243,7 +261,7 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun updateHistoryDisplay(updatedList: List<RefuelRecord>) {
+    private fun updateHistoryDisplay(updatedList: List<RefuelRecordEntity>) {
         // Инициализирован ли адаптер
         if (!::adapter.isInitialized) {
             adapter = MainAdapter(updatedList)
@@ -253,8 +271,5 @@ class MainActivity : AppCompatActivity() {
         } else {
             adapter.updateData(updatedList)
         }
-
-        // Средний расход
-        consumptionText.text = mainVM.calculateAverageConsumption()
     }
 }

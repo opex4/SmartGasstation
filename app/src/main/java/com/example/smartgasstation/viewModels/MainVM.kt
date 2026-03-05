@@ -2,90 +2,94 @@ package com.example.smartgasstation.viewModels
 
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.example.smartgasstation.data.RefuelHistory
-import com.example.smartgasstation.data.RefuelRecord
-import com.example.smartgasstation.storages.RefuelHistoryFileManager
+import androidx.lifecycle.map
 import android.app.Application
+import androidx.lifecycle.viewModelScope
+import com.example.smartgasstation.data.AppDatabase
+import com.example.smartgasstation.data.RefuelRecordEntity
+import com.example.smartgasstation.data.RefuelRepository
+import com.example.smartgasstation.filemanager.RefuelHistoryFileManager
+import kotlinx.coroutines.launch
 
 class MainVM(application: Application) : AndroidViewModel(application){
-    private var refuelHistory = RefuelHistory
+    private val dao = AppDatabase.getDatabase(application).refuelDao()
+    private val repository = RefuelRepository(dao)
+    val refuelRecords = repository.allRecords
     private val fileManager = RefuelHistoryFileManager(application)
 
-    // LiveData для записей заправок
-    private val _refuelRecords = MutableLiveData<List<RefuelRecord>>(refuelHistory.getHistory())
-    val refuelRecords: LiveData<List<RefuelRecord>> = _refuelRecords
-
-    // Обновление UI
-    private fun refreshData() {
-        _refuelRecords.value = refuelHistory.getHistory()
+    val lastOdometer: LiveData<Double?> = refuelRecords.map { list ->
+        if (list.isEmpty()) null else list.last().odometer
     }
 
-    fun calculateAvgConsumption():Double{
-        return refuelHistory.calculateAverageConsumption()
-    }
+    val avgConsumption: LiveData<Double?> = refuelRecords.map { list ->
+        if (list.size < 2) {
+            null
+        } else {
 
-    fun calculateAverageConsumption(): String {
-        // Средний расход
-        try {
-            if (getHistory().isEmpty()) {
-                return "Нет данных о заправках"
-            } else {
-                val averageConsumption = refuelHistory.calculateAverageConsumption()
-                return "Средний расход: ${String.format("%.2f", averageConsumption)} л/100км"
-            }
-        } catch (e: Exception){
-            return e.message?: "Ошибка расчёта расхода"
+            val totalFuel = list.dropLast(1).sumOf { it.fuelAmount }
+
+            val totalDistance =
+                list.last().odometer - list.first().odometer
+
+            (totalFuel / totalDistance) * 100
         }
     }
 
-    fun addRefuelRecord(fuelAmount: Double, odometer: Double){
-        refuelHistory.addRefuelRecord(fuelAmount, odometer)
-        refreshData()
+    fun addRefuelRecord(fuelAmount: Double, odometer: Double) {
+        viewModelScope.launch {
+            repository.addRefuelRecord(fuelAmount, odometer)
+        }
     }
 
-    fun getLastOdometer(): Double {
-        return refuelHistory.getLastOdometer()
+    fun deleteRefuelRecord(record: RefuelRecordEntity) {
+        viewModelScope.launch {
+            repository.deleteRefuelRecord(record)
+        }
     }
 
-    private fun getHistory(): List<RefuelRecord> {
-        return refuelHistory.getHistory()
+    fun updateRefuelRecord(
+        record: RefuelRecordEntity,
+        fuelAmount: Double,
+        odometer: Double
+    ) {
+        viewModelScope.launch {
+            repository.updateRefuelRecord(record, fuelAmount, odometer)
+        }
     }
 
-    fun clearRefuelHistory(){
-        refuelHistory.clearHistory()
-        refreshData()
+    fun clearRefuelHistory() {
+        viewModelScope.launch {
+            repository.clearHistory()
+        }
     }
 
-    fun deleteRefuelRecord(position: Int) {
-        refuelHistory.deleteRefuelRecords(position)
-        refreshData()
+    fun saveToTxt() {
+        viewModelScope.launch {
+            repository.exportToTxt(fileManager)
+        }
     }
 
-    fun updateRefuelRecord(position: Int, fuelAmount: Double, odometer: Double) {
-        refuelHistory.updateRefuelRecord(position, fuelAmount, odometer)
-        refreshData()
+    fun saveToXls() {
+        viewModelScope.launch {
+            repository.exportToXls(fileManager)
+        }
     }
 
-    fun saveToTxt(){
-        fileManager.saveToTxt(refuelHistory, "RefuelHistoryTxt")
+    fun saveToPdf() {
+        viewModelScope.launch {
+            repository.exportToPdf(fileManager)
+        }
     }
 
-    fun saveToXls(){
-        fileManager.saveToXls(refuelHistory, "RefuelHistoryXls")
+    fun loadFromTxt() {
+        viewModelScope.launch {
+            repository.importFromTxt(fileManager)
+        }
     }
 
-    fun saveToPdf(){
-        fileManager.saveToPdf(refuelHistory, "RefuelHistoryPdf")
-    }
-
-    fun loadFromTxt(){
-        fileManager.loadFromTxt("RefuelHistoryTxt")
-        refreshData()
-    }
-
-    fun loadFromXls(){
-        fileManager.loadFromXls("RefuelHistoryXls")
-        refreshData()
+    fun loadFromXls() {
+        viewModelScope.launch {
+            repository.importFromXls(fileManager)
+        }
     }
 }

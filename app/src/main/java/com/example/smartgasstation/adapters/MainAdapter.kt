@@ -6,16 +6,16 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartgasstation.R
-import com.example.smartgasstation.data.RefuelRecord
+import com.example.smartgasstation.data.RefuelRecordEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class MainAdapter(
-    private var refuelRecords: List<RefuelRecord>
+    private var refuelRecords: List<RefuelRecordEntity>
 ) : RecyclerView.Adapter<MainAdapter.MyViewHolder>() {
 
-    fun updateData(newRecords: List<RefuelRecord>) {
+    fun updateData(newRecords: List<RefuelRecordEntity>) {
         refuelRecords = newRecords
         notifyDataSetChanged()
     }
@@ -24,7 +24,7 @@ class MainAdapter(
         notifyDataSetChanged()
     }
 
-    fun getCurrentRefuelRecord(position: Int): RefuelRecord {
+    fun getCurrentRefuelRecord(position: Int): RefuelRecordEntity {
         return refuelRecords[position]
     }
 
@@ -49,7 +49,7 @@ class MainAdapter(
         private val odometerTV: TextView = itemView.findViewById(R.id.tv_odometer)
         private val dateTV: TextView = itemView.findViewById(R.id.tv_date)
 
-        fun bind(record: RefuelRecord) {
+        fun bind(record: RefuelRecordEntity) {
             fuelAmountTV.text = String.format("Залито: %.2f л", record.fuelAmount)
             odometerTV.text = String.format("Пробег: %.2f км", record.odometer)
             dateTV.text = "Дата: ${formatDate(record.timestamp)}"
