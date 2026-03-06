@@ -9,6 +9,7 @@ import com.example.smartgasstation.data.AppDatabase
 import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.data.RefuelRepository
 import com.example.smartgasstation.filemanager.RefuelHistoryFileManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainVM(application: Application) : AndroidViewModel(application){
@@ -25,12 +26,8 @@ class MainVM(application: Application) : AndroidViewModel(application){
         if (list.size < 2) {
             null
         } else {
-
             val totalFuel = list.dropLast(1).sumOf { it.fuelAmount }
-
-            val totalDistance =
-                list.last().odometer - list.first().odometer
-
+            val totalDistance = list.last().odometer - list.first().odometer
             (totalFuel / totalDistance) * 100
         }
     }
@@ -64,31 +61,31 @@ class MainVM(application: Application) : AndroidViewModel(application){
     }
 
     fun saveToTxt() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.exportToTxt(fileManager)
         }
     }
 
     fun saveToXls() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.exportToXls(fileManager)
         }
     }
 
     fun saveToPdf() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.exportToPdf(fileManager)
         }
     }
 
     fun loadFromTxt() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.importFromTxt(fileManager)
         }
     }
 
     fun loadFromXls() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.importFromXls(fileManager)
         }
     }

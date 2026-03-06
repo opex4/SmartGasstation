@@ -9,17 +9,14 @@ import androidx.room.RoomDatabase
     entities = [RefuelRecordEntity::class],
     version = 1
 )
+
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun refuelDao(): RefuelDao
-
     companion object {
-
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-
             return INSTANCE ?: synchronized(this) {
 
                 val instance = Room.databaseBuilder(

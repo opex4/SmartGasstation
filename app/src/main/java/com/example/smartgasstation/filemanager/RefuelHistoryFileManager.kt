@@ -56,7 +56,6 @@ class RefuelHistoryFileManager(private val context: Context) {
         val sheet = workbook.createSheet("Refuel History")
 
         records.forEachIndexed { index, record ->
-
             val row = sheet.createRow(index)
 
             row.createCell(0).setCellValue(record.fuelAmount)
@@ -79,7 +78,6 @@ class RefuelHistoryFileManager(private val context: Context) {
         if (!file.exists()) return records
 
         FileInputStream(file).use { fis ->
-
             val workbook = HSSFWorkbook(fis)
             val sheet = workbook.getSheetAt(0)
 
@@ -114,14 +112,11 @@ class RefuelHistoryFileManager(private val context: Context) {
         canvas.drawText("История заправок", 40f, yPosition.toFloat(), paint)
         yPosition += 30
         records.forEach {
-
             val line =
                 "Топливо: ${it.fuelAmount} л | Пробег: ${it.odometer} км | ${
                     dateFormat.format(Date(it.timestamp))
                 }"
-
             canvas.drawText(line, 40f, yPosition.toFloat(), paint)
-
             yPosition += 25
         }
         document.finishPage(page)
