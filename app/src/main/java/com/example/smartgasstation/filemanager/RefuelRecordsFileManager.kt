@@ -10,7 +10,7 @@ import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-class RefuelHistoryFileManager(private val context: Context) {
+class RefuelRecordsFileManager(private val context: Context) {
     private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
 
     // TXT

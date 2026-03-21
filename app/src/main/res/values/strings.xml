@@ -26,4 +26,6 @@
     <string name="file_save_xls">Сохранить XLS</string>
     <string name="file_load_txt">Загрузить TXT</string>
     <string name="file_save_txt">Сохранить TXT</string>
+    <string name="main_activity_thread_btn">Thread</string>
+    <string name="main_activity_coroutine_btn">Coroutine</string>
 </resources>

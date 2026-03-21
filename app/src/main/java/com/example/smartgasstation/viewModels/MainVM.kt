@@ -4,19 +4,29 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import android.app.Application
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.smartgasstation.data.AppDatabase
 import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.data.RefuelRepository
-import com.example.smartgasstation.filemanager.RefuelHistoryFileManager
+import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
+import com.example.smartgasstation.multithreading.CoroutineManager
+import com.example.smartgasstation.multithreading.ThreadManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MainVM(application: Application) : AndroidViewModel(application){
     private val dao = AppDatabase.getDatabase(application).refuelDao()
     private val repository = RefuelRepository(dao)
     val refuelRecords = repository.allRecords
-    private val fileManager = RefuelHistoryFileManager(application)
+    private val fileManager = RefuelRecordsFileManager(application)
+
+    private val threadManager = ThreadManager(fileManager)
+    private val coroutineManager = CoroutineManager(fileManager)
+    private var coroutineJob: Job? = null
+    private val _progress = MutableLiveData<Int>()
+    val progress: LiveData<Int> = _progress
 
     val lastOdometer: LiveData<Double?> = refuelRecords.map { list ->
         if (list.isEmpty()) null else list.last().odometer
@@ -88,5 +98,33 @@ class MainVM(application: Application) : AndroidViewModel(application){
         viewModelScope.launch(Dispatchers.IO) {
             repository.importFromXls(fileManager)
         }
+    }
+
+    fun startThreadExport() {
+        _progress.postValue(0)
+        viewModelScope.launch(Dispatchers.IO) {
+            val records = repository.allRecords.value ?: return@launch
+            threadManager.startSequentialExport(records){ progress ->
+                _progress.postValue(progress)
+            }
+        }
+    }
+
+    fun startCoroutineExport() {
+        _progress.postValue(0)
+        coroutineJob = viewModelScope.launch {
+            val records = repository.allRecords.value ?: return@launch
+            coroutineManager.startSequentialExport(records){ progress ->
+                _progress.postValue(progress)
+            }
+        }
+    }
+
+    fun cancelThreadExport() {
+        threadManager.cancelTasks()
+    }
+
+    fun cancelCoroutineExport() {
+        coroutineManager.cancelTasks()
     }
 }

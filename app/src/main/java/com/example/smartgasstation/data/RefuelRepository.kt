@@ -1,7 +1,7 @@
 package com.example.smartgasstation.data
 
 import androidx.lifecycle.LiveData
-import com.example.smartgasstation.filemanager.RefuelHistoryFileManager
+import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
 
 class RefuelRepository(private val dao: RefuelDao) {
     val allRecords: LiveData<List<RefuelRecordEntity>> = dao.getAll()
@@ -108,22 +108,22 @@ class RefuelRepository(private val dao: RefuelDao) {
         dao.clear()
     }
 
-    suspend fun exportToTxt(fileManager: RefuelHistoryFileManager) {
+    suspend fun exportToTxt(fileManager: RefuelRecordsFileManager) {
         val records = dao.getAllList()
         fileManager.saveToTxt(records, "RefuelHistoryTxt")
     }
 
-    suspend fun exportToXls(fileManager: RefuelHistoryFileManager) {
+    suspend fun exportToXls(fileManager: RefuelRecordsFileManager) {
         val records = dao.getAllList()
         fileManager.saveToXls(records, "RefuelHistoryXls")
     }
 
-    suspend fun exportToPdf(fileManager: RefuelHistoryFileManager) {
+    suspend fun exportToPdf(fileManager: RefuelRecordsFileManager) {
         val records = dao.getAllList()
         fileManager.saveToPdf(records, "RefuelHistoryPdf")
     }
 
-    suspend fun importFromTxt(fileManager: RefuelHistoryFileManager) {
+    suspend fun importFromTxt(fileManager: RefuelRecordsFileManager) {
         val records = fileManager.loadFromTxt("RefuelHistoryTxt")
         dao.clear()
         records.forEach {
@@ -131,7 +131,7 @@ class RefuelRepository(private val dao: RefuelDao) {
         }
     }
 
-    suspend fun importFromXls(fileManager: RefuelHistoryFileManager) {
+    suspend fun importFromXls(fileManager: RefuelRecordsFileManager) {
         val records = fileManager.loadFromXls("RefuelHistoryXls")
         dao.clear()
         records.forEach {

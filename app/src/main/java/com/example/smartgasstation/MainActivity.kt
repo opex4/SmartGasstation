@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -29,9 +30,15 @@ class MainActivity : AppCompatActivity() {
     private val mainVM: MainVM by viewModels()
     private lateinit var adapter: MainAdapter
     private lateinit var filesButton: ImageButton
+    private lateinit var coroutineButton: Button
+    private lateinit var threadButton: Button
 
     private var lastOdometer: Double? = null
     private var avgConsumption: Double? = null
+
+    private var dialogProgressBar: ProgressBar? = null
+    private var startButton: Button? = null
+    private var cancelButton: Button? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +79,15 @@ class MainActivity : AppCompatActivity() {
             } else {
                 consumptionText.text =
                     "Средний расход: %.2f л/100км".format(avg)
+            }
+        }
+
+        mainVM.progress.observe(this) { value ->
+            dialogProgressBar?.progress = value
+
+            if (value == 100) {
+                cancelButton?.isEnabled = false
+                Toast.makeText(this@MainActivity, "Файлы txt и xls успешно сохранены", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -200,6 +216,78 @@ class MainActivity : AppCompatActivity() {
         filesButton.setOnClickListener {
             saveAndLoadFiles()
         }
+
+        threadButton = findViewById(R.id.thread_btn)
+        threadButton.setOnClickListener{
+            val view = layoutInflater.inflate(R.layout.dialog_export_progress, null)
+            dialogProgressBar = view.findViewById(R.id.exportProgress)
+
+            val dialog = AlertDialog.Builder(this)
+                .setTitle("Потоки")
+                .setCancelable(false)
+                .setView(view)
+                .setMessage("Сохранить в txt и xls?")
+                .setPositiveButton("Старт", null)
+                .setNeutralButton("Выйти"){_, _ ->
+                    dialogProgressBar = null
+                }
+                .setNegativeButton("Отмена", null)
+                .show()
+
+            startButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            cancelButton?.isEnabled = false
+
+            startButton?.setOnClickListener {
+                startButton?.isEnabled = false
+                cancelButton?.isEnabled = true
+                try {
+                    mainVM.startThreadExport()
+                } catch (e: Exception) {
+                    Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+            cancelButton?.setOnClickListener {
+                cancelButton?.isEnabled = false
+                mainVM.cancelThreadExport()
+            }
+        }
+
+        coroutineButton = findViewById(R.id.coroutine_btn)
+        coroutineButton.setOnClickListener{
+            val view = layoutInflater.inflate(R.layout.dialog_export_progress, null)
+            dialogProgressBar = view.findViewById(R.id.exportProgress)
+
+            val dialog = AlertDialog.Builder(this)
+                .setTitle("Корутины")
+                .setCancelable(false)
+                .setView(view)
+                .setMessage("Сохранить в txt и xls?")
+                .setPositiveButton("Старт", null)
+                .setNeutralButton("Выйти") { _, _ ->
+                    dialogProgressBar = null
+                }
+                .setNegativeButton("Отмена", null)
+                .show()
+
+            startButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            cancelButton?.isEnabled = false
+
+            startButton?.setOnClickListener {
+                startButton?.isEnabled = false
+                cancelButton?.isEnabled = true
+                try {
+                    mainVM.startCoroutineExport()
+                } catch (e: Exception) {
+                    Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+            cancelButton?.setOnClickListener {
+                cancelButton?.isEnabled = false
+                mainVM.cancelCoroutineExport()
+            }
+        }
     }
 
     @SuppressLint("MissingInflatedId")
@@ -221,7 +309,7 @@ class MainActivity : AppCompatActivity() {
                 saveToTxt.setOnClickListener {
                     try {
                         mainVM.saveToTxt()
-                        Toast.makeText(this@MainActivity, "Файл сохранён", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "Файл txt сохранён", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception){
                         Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
                     }
@@ -229,7 +317,7 @@ class MainActivity : AppCompatActivity() {
                 saveToXls.setOnClickListener {
                     try {
                         mainVM.saveToXls()
-                        Toast.makeText(this@MainActivity, "Файл сохранён", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "Файл xls сохранён", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception){
                         Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
                     }
@@ -237,7 +325,7 @@ class MainActivity : AppCompatActivity() {
                 saveToPdf.setOnClickListener {
                     try {
                         mainVM.saveToPdf()
-                        Toast.makeText(this@MainActivity, "Файл сохранён", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "Файл pdf сохранён", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception){
                         Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
                     }
@@ -245,7 +333,7 @@ class MainActivity : AppCompatActivity() {
                 loadFromTxt.setOnClickListener {
                     try {
                         mainVM.loadFromTxt()
-                        Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "Файл txt загружен", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception){
                         Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
                     }
@@ -253,7 +341,7 @@ class MainActivity : AppCompatActivity() {
                 loadFromXls.setOnClickListener {
                     try {
                         mainVM.loadFromXls()
-                        Toast.makeText(this@MainActivity, "Файл загружен", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "Файл xls загружен", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception){
                         Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
                     }
