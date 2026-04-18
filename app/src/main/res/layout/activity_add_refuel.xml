@@ -5,6 +5,7 @@
     android:id="@+id/main_activity_file_btn"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
     tools:context=".AddRefuelActivity">
 
     <!-- I1 - EditText для типа топлива -->
@@ -15,6 +16,7 @@
         android:hint="@string/add_refuel_activity_fuel_type_et"
         android:inputType="text"
         android:minHeight="48dp"
+        android:layout_marginTop="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
