@@ -83,11 +83,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         mainVM.progress.observe(this) { value ->
-            dialogProgressBar?.progress = value
-
-            if (value == 100) {
-                cancelButton?.isEnabled = false
-                Toast.makeText(this@MainActivity, "Файлы txt и xls успешно сохранены", Toast.LENGTH_SHORT).show()
+            when (value) {
+                100 -> {
+                    dialogProgressBar?.progress = value
+                    cancelButton?.isEnabled = false
+                    Toast.makeText(this@MainActivity, "Файлы txt и xls успешно сохранены", Toast.LENGTH_SHORT).show()
+                }
+                -1 -> {
+                    cancelButton?.isEnabled = false
+                    Toast.makeText(this@MainActivity, "Ошибка при экспорте файлов", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    dialogProgressBar?.progress = value
+                }
             }
         }
     }

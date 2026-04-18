@@ -14,27 +14,38 @@ class ThreadManager(
 
     fun startSequentialExport(
         records: List<RefuelRecordEntity>,
-        onProgress: (Int) -> Unit
+        onProgress: (Int) -> Unit,
+        onError: (Throwable) -> Unit = {}
     ) {
         isCancelled.set(false)
 
         threadTxt = Thread {
-            onProgress(10)
-            if (isCancelled.get()) return@Thread
-
-            fileManager.saveToTxt(records, "RefuelHistoryTxt")
-            if (isCancelled.get()) return@Thread
-
-            val loaded = fileManager.loadFromTxt("RefuelHistoryTxt")
-            onProgress(50)
-
-            threadXls = Thread {
+            try {
+                onProgress(10)
                 if (isCancelled.get()) return@Thread
 
-                fileManager.saveToXls(loaded, "RefuelHistoryXls")
-                onProgress(100)
+                fileManager.saveToTxt(records, "RefuelHistoryTxt")
+                if (isCancelled.get()) return@Thread
+
+                val loaded = fileManager.loadFromTxt("RefuelHistoryTxt")
+                onProgress(50)
+
+                threadXls = Thread {
+                    try {
+                        if (isCancelled.get()) return@Thread
+
+                        fileManager.saveToXls(loaded, "RefuelHistoryXls")
+                        onProgress(100)
+                    } catch (e: Exception) {
+                        onError(e)
+                    }
+                }
+                threadXls?.start()
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+            } catch (e: Exception) {
+                onError(e)
             }
-            threadXls?.start()
         }
         threadTxt?.start()
     }

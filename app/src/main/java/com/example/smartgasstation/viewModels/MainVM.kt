@@ -4,6 +4,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.smartgasstation.data.AppDatabase
@@ -104,9 +105,14 @@ class MainVM(application: Application) : AndroidViewModel(application){
         _progress.postValue(0)
         viewModelScope.launch(Dispatchers.IO) {
             val records = repository.allRecords.value ?: return@launch
-            threadManager.startSequentialExport(records){ progress ->
-                _progress.postValue(progress)
-            }
+            threadManager.startSequentialExport(
+                records = records,
+                onProgress = { progress -> _progress.postValue(progress) },
+                onError = { error ->
+                    _progress.postValue(-1)
+                    Log.e("MainVM", "Ошибка экспорта (threads): ${error.message}", error)
+                }
+            )
         }
     }
 
@@ -114,9 +120,14 @@ class MainVM(application: Application) : AndroidViewModel(application){
         _progress.postValue(0)
         coroutineJob = viewModelScope.launch {
             val records = repository.allRecords.value ?: return@launch
-            coroutineManager.startSequentialExport(records){ progress ->
-                _progress.postValue(progress)
-            }
+            coroutineManager.startSequentialExport(
+                records = records,
+                onProgress = { progress -> _progress.postValue(progress) },
+                onError = { error ->
+                    _progress.postValue(-1)
+                    Log.e("MainVM", "Ошибка экспорта (coroutines): ${error.message}", error)
+                }
+            )
         }
     }
 
