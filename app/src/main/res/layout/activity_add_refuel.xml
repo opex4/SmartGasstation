@@ -71,6 +71,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/fuelConsumptionInput" />
 
+    <!-- Кнопка отмены поиска (опционально) -->
+    <Button
+        android:id="@+id/cancelSearchButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Отменить"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/calculateButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <!-- O1 - TextView для результатов -->
     <TextView
         android:id="@+id/resultText"
@@ -83,7 +94,7 @@
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/calculateButton" />
+        app:layout_constraintTop_toBottomOf="@+id/cancelSearchButton" />
 
     <!-- Кнопка записи заправки -->
     <Button

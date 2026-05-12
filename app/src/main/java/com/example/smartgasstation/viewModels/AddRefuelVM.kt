@@ -1,73 +1,80 @@
 package com.example.smartgasstation.viewModels
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.smartgasstation.data.BestStationResult
 import com.example.smartgasstation.data.GasStation
+import com.example.smartgasstation.data.api.BestStationResponse
+import com.example.smartgasstation.data.repository.GasStationRepository
+import com.example.smartgasstation.network.NetworkModule
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class AddRefuelVM :  ViewModel(){
-    // Список заправок
-    private val gasStations = listOf(
-        GasStation(
-            id = 1,
-            name = "Лукойл №1",
-            fuelPrice = 50.5,
-            distance = 2.5,
-            availableFuels = listOf("АИ-95", "АИ-92", "ДТ")
-        ),
-        GasStation(
-            id = 2,
-            name = "Роснефть №2",
-            fuelPrice = 49.8,
-            distance = 5.0,
-            availableFuels = listOf("АИ-95", "АИ-92", "ДТ", "Газ")
-        ),
-        GasStation(
-            id = 3,
-            name = "Газпромнефть №3",
-            fuelPrice = 51.2,
-            distance = 1.0,
-            availableFuels = listOf("АИ-95", "АИ-98", "ДТ")
-        )
+class AddRefuelVM(application: Application) : AndroidViewModel(application) {
+
+    private val repository = GasStationRepository(
+        api = NetworkModule.provideGasStationApi(application)
     )
 
-    // Поиск лучшей заправки
-    fun findBestGasStation(fuelType: String, fuelAmount: Double, fuelConsumption: Double): BestStationResult? {
-        // Фильтруем заправки по типу топлива
-        val suitableStations = gasStations.filter { station ->
-            station.availableFuels.any { it.contains(fuelType, ignoreCase = true) }
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    private val localStations = listOf(
+        GasStation(1, "Лукойл №1", 50.5, 2.5, listOf("АИ-95", "АИ-92", "ДТ")),
+        GasStation(2, "Роснефть №2", 49.8, 5.0, listOf("АИ-95", "АИ-92", "ДТ", "Газ")),
+        GasStation(3, "Газпромнефть №3", 51.2, 1.0, listOf("АИ-95", "АИ-98", "ДТ"))
+    )
+
+    fun searchBestStation(fuelType: String, fuelAmount: Double, consumption: Double) {
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            try {
+                val result = repository.findBestStation(fuelType, fuelAmount, consumption)
+                if (result.isSuccess) {
+                    _uiState.value = UiState.ServerResult(result.getOrNull()!!)
+                } else {
+                    handleFallback(fuelType, fuelAmount, consumption, result.exceptionOrNull())
+                }
+            } catch (e: Exception) {
+                handleFallback(fuelType, fuelAmount, consumption, e)
+            }
         }
-
-        if (suitableStations.isEmpty()) return null
-
-        // Рассчитываем стоимость для каждой подходящей заправки
-        val stationsWithCost = suitableStations.map { station ->
-            val fuelCost = station.fuelPrice * fuelAmount
-            val tripFuel = (station.distance * fuelConsumption) / 100
-            val tripCost = tripFuel * station.fuelPrice
-            val totalCost = fuelCost + tripCost
-
-            BestStationResult(station, tripCost, totalCost)
-        }
-
-        // Возвращаем заправку с минимальной общей стоимостью
-        return stationsWithCost.minByOrNull { it.totalCost }
     }
 
-    fun calculateBestGasStation(fuelType: String, fuelAmount: Double, consumption: Double): String? {
-        // Поиск лучшей заправки
-        val bestStation = findBestGasStation(fuelType, fuelAmount, consumption)
-
-        if (bestStation != null) {
-            val result = """
-                    Лучшая заправка: ${bestStation.station.name}
-                    Цена за литр: ${bestStation.station.fuelPrice} руб.
-                    Расстояние: ${bestStation.station.distance} км
-                    Стоимость поездки: ${String.format("%.2f", bestStation.tripCost)} руб.
-                    Общая стоимость: ${String.format("%.2f", bestStation.totalCost)} руб.
-                """.trimIndent()
-            return result
+    private fun handleFallback(fuelType: String, fuelAmount: Double, consumption: Double, error: Throwable?) {
+        val local = findLocalBest(fuelType, fuelAmount, consumption)
+        _uiState.value = if (local != null) {
+            UiState.LocalResult(local)
         } else {
-            return null
+            UiState.Error(error?.message ?: "Ошибка обработки")
         }
+    }
+
+    private fun findLocalBest(fuelType: String, fuelAmount: Double, consumption: Double): BestStationResult? {
+        val suitable = localStations.filter { station ->
+            station.availableFuels.any { it.contains(fuelType, ignoreCase = true) }
+        }
+        if (suitable.isEmpty()) return null
+        return suitable.map { station ->
+            val fuelCost = station.fuelPrice * fuelAmount
+            val tripFuel = (station.distance * consumption) / 100
+            val tripCost = tripFuel * station.fuelPrice
+            BestStationResult(station, tripCost, fuelCost + tripCost)
+        }.minByOrNull { it.totalCost }
+    }
+
+    fun cancelSearch() {
+        _uiState.value = UiState.Idle
+    }
+
+    sealed class UiState {
+        object Idle : UiState()
+        object Loading : UiState()
+        data class ServerResult(val response: BestStationResponse) : UiState()
+        data class LocalResult(val result: BestStationResult) : UiState()
+        data class Error(val message: String) : UiState()
     }
 }
