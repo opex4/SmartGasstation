@@ -3,13 +3,13 @@ package com.example.smartgasstation.multithreading
 import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 
-class ThreadManager(
+class ThreadManager @Inject constructor(
     private val fileManager: RefuelRecordsFileManager
 ) {
     private var threadTxt: Thread? = null
     private var threadXls: Thread? = null
-
     private val isCancelled = AtomicBoolean(false)
 
     fun startSequentialExport(
@@ -33,7 +33,6 @@ class ThreadManager(
                 threadXls = Thread {
                     try {
                         if (isCancelled.get()) return@Thread
-
                         fileManager.saveToXls(loaded, "RefuelHistoryXls")
                         onProgress(100)
                     } catch (e: Exception) {

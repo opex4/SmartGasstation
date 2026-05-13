@@ -5,18 +5,18 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.smartgasstation.viewModels.AddRefuelVM
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+@AndroidEntryPoint
 class AddRefuelActivity : AppCompatActivity() {
-
-    private var lastOdometer: Double = -1.0
-    private var averageConsumption: Double = 0.0
 
     private lateinit var fuelTypeInput: EditText
     private lateinit var fuelAmountInput: EditText
@@ -33,12 +33,11 @@ class AddRefuelActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_refuel)
-        lastOdometer = intent.getDoubleExtra("last_odometer", -1.0)
-        averageConsumption = intent.getDoubleExtra("average_consumption", 0.0)
         initializeViews()
         setupClickListeners()
-        updateFuelConsumptionField(averageConsumption)
-        observeState()
+        observeUiState()
+        observeSaveState()
+        observeConsumption()
     }
 
     private fun initializeViews() {
@@ -58,11 +57,18 @@ class AddRefuelActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         calculateButton.setOnClickListener { calculateBestGasStation() }
         refuelButton.setOnClickListener { recordRefuel() }
-        returnButton.setOnClickListener { goToMainActivity() }
+        returnButton.setOnClickListener { finish() }
         cancelSearchButton.setOnClickListener {
             addRefuelVM.cancelSearch()
-            resultText.text = "Запрос отменен"
+            resultText.text = "Запрос отменён"
             calculateButton.isEnabled = true
+            cancelSearchButton.isEnabled = false
+        }
+    }
+
+    private fun observeConsumption() {
+        addRefuelVM.avgConsumption.observe(this) { avg ->
+            updateFuelConsumptionField(avg ?: 0.0)
         }
     }
 
@@ -87,7 +93,7 @@ class AddRefuelActivity : AppCompatActivity() {
         }
     }
 
-    private fun observeState() {
+    private fun observeUiState() {
         lifecycleScope.launch {
             addRefuelVM.uiState.collectLatest { state ->
                 when (state) {
@@ -96,22 +102,11 @@ class AddRefuelActivity : AppCompatActivity() {
                         calculateButton.isEnabled = false
                         cancelSearchButton.isEnabled = true
                     }
-                    is AddRefuelVM.UiState.ServerResult -> {
+                    is AddRefuelVM.UiState.Success -> {
                         val r = state.response
                         resultText.text = "Лучшая заправка: ${r.name}\n" +
                                 "Цена за литр: ${r.pricePerLiter} руб.\n" +
                                 "Расстояние: ${r.distance} км\n" +
-                                "Стоимость поездки: ${String.format("%.2f", r.tripCost)} руб.\n" +
-                                "Общая стоимость: ${String.format("%.2f", r.totalCost)} руб."
-                        calculateButton.isEnabled = true
-                        cancelSearchButton.isEnabled = false
-                    }
-                    is AddRefuelVM.UiState.LocalResult -> {
-                        val r = state.result
-                        resultText.text = "Сетевой запрос не выполнен. Используются локальные данные:\n" +
-                                "Лучшая заправка: ${r.station.name}\n" +
-                                "Цена за литр: ${r.station.fuelPrice} руб.\n" +
-                                "Расстояние: ${r.station.distance} км\n" +
                                 "Стоимость поездки: ${String.format("%.2f", r.tripCost)} руб.\n" +
                                 "Общая стоимость: ${String.format("%.2f", r.totalCost)} руб."
                         calculateButton.isEnabled = true
@@ -131,6 +126,24 @@ class AddRefuelActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeSaveState() {
+        lifecycleScope.launch {
+            addRefuelVM.saveState.collectLatest { state ->
+                when (state) {
+                    is AddRefuelVM.SaveState.Success -> {
+                        Toast.makeText(this@AddRefuelActivity, "Заправка записана в историю", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                    is AddRefuelVM.SaveState.Error -> {
+                        resultText.text = state.message
+                        addRefuelVM.resetSaveState()
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+
     private fun recordRefuel() {
         val fuelAmountText = fuelAmountInput.text.toString().trim()
         val odometerText = odometerInput.text.toString().trim()
@@ -143,37 +156,17 @@ class AddRefuelActivity : AppCompatActivity() {
         try {
             val fuelAmount = fuelAmountText.toDouble()
             val odometer = odometerText.toDouble()
-
-            if (odometer <= lastOdometer) {
-                resultText.text = "Ошибка: текущий пробег ($odometer км) должен быть больше предыдущего ($lastOdometer км)"
-                return
-            }
-
             fuelAmountInput.text.clear()
             odometerInput.text.clear()
-            goToMainActivity(fuelAmount, odometer)
-
+            addRefuelVM.saveRefuel(fuelAmount, odometer)
         } catch (e: NumberFormatException) {
             resultText.text = "Некорректные числовые значения"
         }
     }
 
-    private fun goToMainActivity(fuelAmount: Double, odometer: Double) {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("fuel_amount", fuelAmount)
-        intent.putExtra("odometer", odometer)
-        startActivity(intent)
-        finish()
-    }
-
-    private fun goToMainActivity() {
-        startActivity(Intent(this, MainActivity::class.java))
-        finish()
-    }
-
     private fun updateFuelConsumptionField(averageConsumption: Double) {
         if (averageConsumption > 0) {
-            fuelConsumptionInput.setText(String.format(Locale.US,"%.2f", averageConsumption))
+            fuelConsumptionInput.setText(String.format(Locale.US, "%.2f", averageConsumption))
             fuelConsumptionInput.isEnabled = false
             fuelConsumptionInput.setBackgroundColor(0xFFE8E8E8.toInt())
         } else {

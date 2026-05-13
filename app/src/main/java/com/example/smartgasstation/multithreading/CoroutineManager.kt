@@ -10,11 +10,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class CoroutineManager(
+class CoroutineManager @Inject constructor(
     private val fileManager: RefuelRecordsFileManager
 ) {
-    private val exceptionHandler = CoroutineExceptionHandler { context, exception ->
+    private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         Log.e("CoroutineManager", "Ошибка в корутине: ${exception.message}", exception)
     }
 

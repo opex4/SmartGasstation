@@ -1,31 +1,45 @@
 package com.example.smartgasstation.viewModels
 
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.map
-import android.app.Application
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.example.smartgasstation.data.AppDatabase
 import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.data.RefuelRepository
-import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
+import com.example.smartgasstation.domain.usecase.ClearHistoryUseCase
+import com.example.smartgasstation.domain.usecase.DeleteRefuelUseCase
+import com.example.smartgasstation.domain.usecase.ExportToPdfUseCase
+import com.example.smartgasstation.domain.usecase.ExportToTxtUseCase
+import com.example.smartgasstation.domain.usecase.ExportToXlsUseCase
+import com.example.smartgasstation.domain.usecase.GetRefuelRecordsUseCase
+import com.example.smartgasstation.domain.usecase.ImportFromTxtUseCase
+import com.example.smartgasstation.domain.usecase.ImportFromXlsUseCase
+import com.example.smartgasstation.domain.usecase.UpdateRefuelUseCase
 import com.example.smartgasstation.multithreading.CoroutineManager
 import com.example.smartgasstation.multithreading.ThreadManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainVM(application: Application) : AndroidViewModel(application){
-    private val dao = AppDatabase.getDatabase(application).refuelDao()
-    private val repository = RefuelRepository(dao)
-    val refuelRecords = repository.allRecords
-    private val fileManager = RefuelRecordsFileManager(application)
+@HiltViewModel
+class MainVM @Inject constructor(
+    private val getRefuelRecordsUseCase: GetRefuelRecordsUseCase,
+    private val deleteRefuelUseCase: DeleteRefuelUseCase,
+    private val updateRefuelUseCase: UpdateRefuelUseCase,
+    private val clearHistoryUseCase: ClearHistoryUseCase,
+    private val exportToTxtUseCase: ExportToTxtUseCase,
+    private val exportToXlsUseCase: ExportToXlsUseCase,
+    private val exportToPdfUseCase: ExportToPdfUseCase,
+    private val importFromTxtUseCase: ImportFromTxtUseCase,
+    private val importFromXlsUseCase: ImportFromXlsUseCase,
+    private val threadManager: ThreadManager,
+    private val coroutineManager: CoroutineManager
+) : ViewModel() {
 
-    private val threadManager = ThreadManager(fileManager)
-    private val coroutineManager = CoroutineManager(fileManager)
-    private var coroutineJob: Job? = null
+    val refuelRecords: LiveData<List<RefuelRecordEntity>> = getRefuelRecordsUseCase()
+
     private val _progress = MutableLiveData<Int>()
     val progress: LiveData<Int> = _progress
 
@@ -43,68 +57,58 @@ class MainVM(application: Application) : AndroidViewModel(application){
         }
     }
 
-    fun addRefuelRecord(fuelAmount: Double, odometer: Double) {
-        viewModelScope.launch {
-            repository.addRefuelRecord(fuelAmount, odometer)
-        }
-    }
-
     fun deleteRefuelRecord(record: RefuelRecordEntity) {
         viewModelScope.launch {
-            repository.deleteRefuelRecord(record)
+            deleteRefuelUseCase(record)
         }
     }
 
-    fun updateRefuelRecord(
-        record: RefuelRecordEntity,
-        fuelAmount: Double,
-        odometer: Double
-    ) {
+    fun updateRefuelRecord(record: RefuelRecordEntity, fuelAmount: Double, odometer: Double) {
         viewModelScope.launch {
-            repository.updateRefuelRecord(record, fuelAmount, odometer)
+            updateRefuelUseCase(record, fuelAmount, odometer)
         }
     }
 
     fun clearRefuelHistory() {
         viewModelScope.launch {
-            repository.clearHistory()
+            clearHistoryUseCase()
         }
     }
 
     fun saveToTxt() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.exportToTxt(fileManager)
+            exportToTxtUseCase()
         }
     }
 
     fun saveToXls() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.exportToXls(fileManager)
+            exportToXlsUseCase()
         }
     }
 
     fun saveToPdf() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.exportToPdf(fileManager)
+            exportToPdfUseCase()
         }
     }
 
     fun loadFromTxt() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.importFromTxt(fileManager)
+            importFromTxtUseCase()
         }
     }
 
     fun loadFromXls() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.importFromXls(fileManager)
+            importFromXlsUseCase()
         }
     }
 
     fun startThreadExport() {
         _progress.postValue(0)
         viewModelScope.launch(Dispatchers.IO) {
-            val records = repository.allRecords.value ?: return@launch
+            val records = refuelRecords.value ?: return@launch
             threadManager.startSequentialExport(
                 records = records,
                 onProgress = { progress -> _progress.postValue(progress) },
@@ -118,8 +122,8 @@ class MainVM(application: Application) : AndroidViewModel(application){
 
     fun startCoroutineExport() {
         _progress.postValue(0)
-        coroutineJob = viewModelScope.launch {
-            val records = repository.allRecords.value ?: return@launch
+        viewModelScope.launch {
+            val records = refuelRecords.value ?: return@launch
             coroutineManager.startSequentialExport(
                 records = records,
                 onProgress = { progress -> _progress.postValue(progress) },

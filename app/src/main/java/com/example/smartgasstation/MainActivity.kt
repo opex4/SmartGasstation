@@ -17,11 +17,13 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartgasstation.adapters.MainAdapter
-import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.adapters.SwipeToActionCallback
+import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.viewModels.MainVM
 import com.google.android.material.textfield.TextInputEditText
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
@@ -33,9 +35,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var coroutineButton: Button
     private lateinit var threadButton: Button
 
-    private var lastOdometer: Double? = null
-    private var avgConsumption: Double? = null
-
     private var dialogProgressBar: ProgressBar? = null
     private var startButton: Button? = null
     private var cancelButton: Button? = null
@@ -45,21 +44,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         initializeViews()
         initObserves()
-
-        if(intent.hasExtra("fuel_amount") && intent.hasExtra("odometer")){
-            val fuelAmount = intent.getDoubleExtra("fuel_amount", 0.0)
-            val odometer = intent.getDoubleExtra("odometer", -1.0)
-            if(fuelAmount != 0.0 || odometer != -1.0){
-                try {
-                    mainVM.addRefuelRecord(fuelAmount, odometer)
-                    Toast.makeText(this, "Заправка записана в историю", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception){
-                    Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(this, "Ошибка сохранения записи", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
     private fun initObserves() {
@@ -67,18 +51,11 @@ class MainActivity : AppCompatActivity() {
             updateHistoryDisplay(records)
         }
 
-        mainVM.lastOdometer.observe(this) {
-            lastOdometer = it
-        }
-
         mainVM.avgConsumption.observe(this) { avg ->
-            // Средний расход
-            avgConsumption = avg
             if (avg == null) {
                 consumptionText.text = "Нет данных о заправках"
             } else {
-                consumptionText.text =
-                    "Средний расход: %.2f л/100км".format(avg)
+                consumptionText.text = "Средний расход: %.2f л/100км".format(avg)
             }
         }
 
@@ -87,11 +64,11 @@ class MainActivity : AppCompatActivity() {
                 100 -> {
                     dialogProgressBar?.progress = value
                     cancelButton?.isEnabled = false
-                    Toast.makeText(this@MainActivity, "Файлы txt и xls успешно сохранены", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Файлы txt и xls успешно сохранены", Toast.LENGTH_SHORT).show()
                 }
                 -1 -> {
                     cancelButton?.isEnabled = false
-                    Toast.makeText(this@MainActivity, "Ошибка при экспорте файлов", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Ошибка при экспорте файлов", Toast.LENGTH_LONG).show()
                 }
                 else -> {
                     dialogProgressBar?.progress = value
@@ -115,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                         try {
                             val record = adapter.getCurrentRefuelRecord(position)
                             mainVM.deleteRefuelRecord(record)
-                        } catch (e: Exception){
+                        } catch (e: Exception) {
                             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -123,7 +100,6 @@ class MainActivity : AppCompatActivity() {
                     .show()
             }
         )
-
         ItemTouchHelper(callback).attachToRecyclerView(recyclerView)
     }
 
@@ -139,37 +115,28 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Редактирование записи")
             .setView(dialogLayout)
-            .setPositiveButton("Сохранить") {dialog, _ ->
+            .setPositiveButton("Сохранить") { dialog, _ ->
                 val fuelStr = fuelInput.text.toString()
                 val odometerStr = odometerInput.text.toString()
 
                 when {
                     fuelStr.isEmpty() || odometerStr.isEmpty() -> {
-                        Toast.makeText(this@MainActivity, "Заполните все поля", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show()
                     }
                     else -> try {
                         val fuelDouble = fuelStr.toDouble()
                         val odometerDouble = odometerStr.toDouble()
-
-                        val record = adapter.getCurrentRefuelRecord(position)
-
-                        mainVM.updateRefuelRecord(
-                            record,
-                            fuelDouble,
-                            odometerDouble
-                        )
-
+                        val updatedRecord = adapter.getCurrentRefuelRecord(position)
+                        mainVM.updateRefuelRecord(updatedRecord, fuelDouble, odometerDouble)
                         dialog.dismiss()
                     } catch (e: NumberFormatException) {
-                        Toast.makeText(this@MainActivity, "Введите корректные числа", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Введите корректные числа", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-            .setNegativeButton("Отмена") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("Отмена") { dialog, _ -> dialog.dismiss() }
             .show()
     }
 
@@ -181,7 +148,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.go_to_add_refuel_activity -> {
-                goToAddRefuelActivity()
+                startActivity(Intent(this, AddRefuelActivity::class.java))
                 true
             }
             R.id.clear_refuel_history -> {
@@ -196,64 +163,40 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Подтверждение")
             .setMessage("Вы действительно хотите очистить всю историю заправок?")
-            .setPositiveButton("Да") { _, _ ->
-                mainVM.clearRefuelHistory()
-            }
+            .setPositiveButton("Да") { _, _ -> mainVM.clearRefuelHistory() }
             .setNegativeButton("Нет", null)
             .show()
-    }
-
-    private fun goToAddRefuelActivity() {
-        val intent = Intent(this, AddRefuelActivity::class.java)
-        intent.putExtra(
-            "average_consumption",
-            mainVM.avgConsumption.value ?: 0.0
-        )
-        intent.putExtra(
-            "last_odometer",
-            mainVM.lastOdometer.value ?: -1.0
-        )
-        startActivity(intent)
     }
 
     private fun initializeViews() {
         recyclerView = findViewById(R.id.main_recycler_view)
         consumptionText = findViewById(R.id.main_activity_consumption_tv)
         consumptionText.text = "Нет данных о заправках"
+
         filesButton = findViewById(R.id.main_activity_files_btn)
-        filesButton.setOnClickListener {
-            saveAndLoadFiles()
-        }
+        filesButton.setOnClickListener { saveAndLoadFiles() }
 
         threadButton = findViewById(R.id.thread_btn)
-        threadButton.setOnClickListener{
+        threadButton.setOnClickListener {
             val view = layoutInflater.inflate(R.layout.dialog_export_progress, null)
             dialogProgressBar = view.findViewById(R.id.exportProgress)
-
             val dialog = AlertDialog.Builder(this)
                 .setTitle("Потоки")
                 .setCancelable(false)
                 .setView(view)
                 .setMessage("Сохранить в txt и xls?")
                 .setPositiveButton("Старт", null)
-                .setNeutralButton("Выйти"){_, _ ->
-                    dialogProgressBar = null
-                }
+                .setNeutralButton("Выйти") { _, _ -> dialogProgressBar = null }
                 .setNegativeButton("Отмена", null)
                 .show()
 
             startButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
             cancelButton?.isEnabled = false
-
             startButton?.setOnClickListener {
                 startButton?.isEnabled = false
                 cancelButton?.isEnabled = true
-                try {
-                    mainVM.startThreadExport()
-                } catch (e: Exception) {
-                    Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
-                }
+                mainVM.startThreadExport()
             }
             cancelButton?.setOnClickListener {
                 cancelButton?.isEnabled = false
@@ -262,34 +205,26 @@ class MainActivity : AppCompatActivity() {
         }
 
         coroutineButton = findViewById(R.id.coroutine_btn)
-        coroutineButton.setOnClickListener{
+        coroutineButton.setOnClickListener {
             val view = layoutInflater.inflate(R.layout.dialog_export_progress, null)
             dialogProgressBar = view.findViewById(R.id.exportProgress)
-
             val dialog = AlertDialog.Builder(this)
                 .setTitle("Корутины")
                 .setCancelable(false)
                 .setView(view)
                 .setMessage("Сохранить в txt и xls?")
                 .setPositiveButton("Старт", null)
-                .setNeutralButton("Выйти") { _, _ ->
-                    dialogProgressBar = null
-                }
+                .setNeutralButton("Выйти") { _, _ -> dialogProgressBar = null }
                 .setNegativeButton("Отмена", null)
                 .show()
 
             startButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
             cancelButton?.isEnabled = false
-
             startButton?.setOnClickListener {
                 startButton?.isEnabled = false
                 cancelButton?.isEnabled = true
-                try {
-                    mainVM.startCoroutineExport()
-                } catch (e: Exception) {
-                    Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
-                }
+                mainVM.startCoroutineExport()
             }
             cancelButton?.setOnClickListener {
                 cancelButton?.isEnabled = false
@@ -300,65 +235,42 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingInflatedId")
     private fun saveAndLoadFiles() {
-        val saveAndLoadFilesLayout = layoutInflater.inflate(R.layout.dialog_work_with_files, null)
-
-        val saveToTxt = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnSaveTxt)
-        val saveToXls = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnSaveXls)
-        val saveToPdf = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnSavePdf)
-
-        val loadFromTxt = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadTxt)
-        val loadFromXls = saveAndLoadFilesLayout.findViewById<Button>(R.id.btnLoadXls)
+        val layout = layoutInflater.inflate(R.layout.dialog_work_with_files, null)
+        val saveToTxt = layout.findViewById<Button>(R.id.btnSaveTxt)
+        val saveToXls = layout.findViewById<Button>(R.id.btnSaveXls)
+        val saveToPdf = layout.findViewById<Button>(R.id.btnSavePdf)
+        val loadFromTxt = layout.findViewById<Button>(R.id.btnLoadTxt)
+        val loadFromXls = layout.findViewById<Button>(R.id.btnLoadXls)
 
         AlertDialog.Builder(this)
             .setTitle("Работа с файлами")
-            .setView(saveAndLoadFilesLayout)
+            .setView(layout)
             .show()
             .apply {
                 saveToTxt.setOnClickListener {
-                    try {
-                        mainVM.saveToTxt()
-                        Toast.makeText(this@MainActivity, "Файл txt сохранён", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
-                    }
+                    mainVM.saveToTxt()
+                    Toast.makeText(this@MainActivity, "Файл txt сохранён", Toast.LENGTH_SHORT).show()
                 }
                 saveToXls.setOnClickListener {
-                    try {
-                        mainVM.saveToXls()
-                        Toast.makeText(this@MainActivity, "Файл xls сохранён", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
-                    }
+                    mainVM.saveToXls()
+                    Toast.makeText(this@MainActivity, "Файл xls сохранён", Toast.LENGTH_SHORT).show()
                 }
                 saveToPdf.setOnClickListener {
-                    try {
-                        mainVM.saveToPdf()
-                        Toast.makeText(this@MainActivity, "Файл pdf сохранён", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
-                    }
+                    mainVM.saveToPdf()
+                    Toast.makeText(this@MainActivity, "Файл pdf сохранён", Toast.LENGTH_SHORT).show()
                 }
                 loadFromTxt.setOnClickListener {
-                    try {
-                        mainVM.loadFromTxt()
-                        Toast.makeText(this@MainActivity, "Файл txt загружен", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
-                    }
+                    mainVM.loadFromTxt()
+                    Toast.makeText(this@MainActivity, "Файл txt загружен", Toast.LENGTH_SHORT).show()
                 }
                 loadFromXls.setOnClickListener {
-                    try {
-                        mainVM.loadFromXls()
-                        Toast.makeText(this@MainActivity, "Файл xls загружен", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception){
-                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
-                    }
+                    mainVM.loadFromXls()
+                    Toast.makeText(this@MainActivity, "Файл xls загружен", Toast.LENGTH_SHORT).show()
                 }
             }
     }
 
     private fun updateHistoryDisplay(updatedList: List<RefuelRecordEntity>) {
-        // Инициализирован ли адаптер
         if (!::adapter.isInitialized) {
             adapter = MainAdapter(updatedList)
             recyclerView.layoutManager = GridLayoutManager(this, 3, GridLayoutManager.HORIZONTAL, false)

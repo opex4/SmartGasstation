@@ -1,8 +1,4 @@
 package com.example.smartgasstation.data
 
-// Класс для результатов поиска
-data class BestStationResult(
-    val station: GasStation,
-    val tripCost: Double,
-    val totalCost: Double
-)
+// Удалено: использовалось только как заглушка локального поиска заправок.
+// Логика поиска полностью перенесена на сервер (GasStationRepository → FindBestStationUseCase).

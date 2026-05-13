@@ -1,18 +1,20 @@
 package com.example.smartgasstation.data.repository
 
-import com.example.smartgasstation.data.api.*
+import com.example.smartgasstation.data.api.BestStationResponse
 import com.example.smartgasstation.network.api.GasStationApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
+import javax.inject.Inject
 
-class GasStationRepository(private val api: GasStationApi) {
+class GasStationRepository @Inject constructor(private val api: GasStationApi) {
+
     suspend fun findBestStation(
         fuelType: String,
         fuelAmount: Double,
         consumption: Double
     ): Result<BestStationResponse> = withContext(Dispatchers.IO) {
         try {
-            // Получение ID заправок с указанным типом топлива
             val idsResponse = api.getStationIds(fuelType)
             if (!idsResponse.isSuccessful || idsResponse.body() == null) {
                 return@withContext Result.failure(IOException("Сервер недоступен или ошибка формата"))
@@ -23,7 +25,6 @@ class GasStationRepository(private val api: GasStationApi) {
                 return@withContext Result.failure(IOException("Заправки с таким топливом не найдены"))
             }
 
-            // Отправка ID и параметров для расчета лучшей заправки
             val idsQuery = stationIds.joinToString(",")
             val bestResponse = api.getBestStation(idsQuery, fuelAmount, consumption)
 
