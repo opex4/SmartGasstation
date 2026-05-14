@@ -46,13 +46,13 @@ SmartGasstation/
 │       │   ├── adapters/              # RecyclerView adapters
 │       │   ├── data/
 │       │   │   ├── db/                # AppDatabase, RefuelDao, RefuelRecordEntity
-│       │   │   ├── api/               # BestStationResponse, StationIdsResponse
+│       │   │   ├── api/               # GasStationApi, BestStationResponse, StationIdsResponse (DTO)
 │       │   │   ├── RefuelRepository.kt        # Pure DB access (insert/update/delete/get)
 │       │   │   └── repository/
 │       │   │       └── GasStationRepository.kt # Network API access
 │       │   ├── di/                    # Hilt DI modules
 │       │   │   ├── AppModule.kt       # DB, DAO, FileManager
-│       │   │   ├── NetworkHiltModule.kt # OkHttpClient, Retrofit, GasStationApi
+│       │   │   ├── NetworkHiltModule.kt # OkHttpClient, Retrofit, GasStationApi, CacheControlInterceptor
 │       │   │   └── RepositoryModule.kt  # RefuelRepository, GasStationRepository
 │       │   ├── domain/
 │       │   │   └── usecase/           # Business logic & validation
@@ -69,8 +69,7 @@ SmartGasstation/
 │       │   │       └── ImportFromXlsUseCase.kt
 │       │   ├── filemanager/           # TXT, XLS, PDF export/import
 │       │   ├── multithreading/        # CoroutineManager, ThreadManager
-│       │   ├── network/
-│       │   │   └── api/GasStationApi.kt
+│       │   ├── network/               # (пусто — инфраструктура перенесена в di/)
 │       │   ├── viewModels/
 │       │   │   ├── MainVM.kt          # @HiltViewModel
 │       │   │   └── AddRefuelVM.kt     # @HiltViewModel

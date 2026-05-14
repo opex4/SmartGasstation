@@ -1,7 +1,7 @@
 package com.example.smartgasstation.data.repository
 
 import com.example.smartgasstation.data.api.BestStationResponse
-import com.example.smartgasstation.network.api.GasStationApi
+import com.example.smartgasstation.data.api.GasStationApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException

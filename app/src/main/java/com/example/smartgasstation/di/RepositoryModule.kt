@@ -2,8 +2,8 @@ package com.example.smartgasstation.di
 
 import com.example.smartgasstation.data.RefuelDao
 import com.example.smartgasstation.data.RefuelRepository
+import com.example.smartgasstation.data.api.GasStationApi
 import com.example.smartgasstation.data.repository.GasStationRepository
-import com.example.smartgasstation.network.api.GasStationApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
