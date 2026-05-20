@@ -1,10 +1,9 @@
 package com.example.smartgasstation.domain.usecase
 
-import com.example.smartgasstation.data.RefuelRepository
-import javax.inject.Inject
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 
-class ClearHistoryUseCase @Inject constructor(
-    private val repository: RefuelRepository
+class ClearHistoryUseCase(
+    private val repository: IRefuelRepository
 ) {
     suspend operator fun invoke() = repository.clear()
 }

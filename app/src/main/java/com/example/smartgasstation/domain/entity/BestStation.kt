@@ -1,6 +1,6 @@
-package com.example.smartgasstation.data.api
+package com.example.smartgasstation.domain.entity
 
-data class BestStationResponse(
+data class BestStation(
     val name: String,
     val pricePerLiter: Double,
     val distance: Double,

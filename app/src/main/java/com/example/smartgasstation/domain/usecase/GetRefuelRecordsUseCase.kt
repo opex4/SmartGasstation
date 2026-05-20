@@ -1,12 +1,10 @@
 package com.example.smartgasstation.domain.usecase
 
-import androidx.lifecycle.LiveData
-import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.data.RefuelRepository
-import javax.inject.Inject
+import com.example.smartgasstation.domain.entity.RefuelRecord
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 
-class GetRefuelRecordsUseCase @Inject constructor(
-    private val repository: RefuelRepository
+class GetRefuelRecordsUseCase(
+    private val repository: IRefuelRepository
 ) {
-    operator fun invoke(): LiveData<List<RefuelRecordEntity>> = repository.allRecords
+    suspend operator fun invoke(): List<RefuelRecord> = repository.getAllList()
 }

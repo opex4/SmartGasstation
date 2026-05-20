@@ -1,5 +1,5 @@
 package com.example.smartgasstation.data.api
 
-data class StationIdsResponse(
+data class StationIdsDTO(
     val stationIds: List<Int>
 )

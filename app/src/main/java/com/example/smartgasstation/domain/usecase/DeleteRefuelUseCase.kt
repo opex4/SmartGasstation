@@ -1,13 +1,13 @@
 package com.example.smartgasstation.domain.usecase
 
-import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.data.RefuelRepository
+import com.example.smartgasstation.domain.entity.RefuelRecord
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 import javax.inject.Inject
 
 class DeleteRefuelUseCase @Inject constructor(
-    private val repository: RefuelRepository
+    private val repository: IRefuelRepository
 ) {
-    suspend operator fun invoke(record: RefuelRecordEntity) {
+    suspend operator fun invoke(record: RefuelRecord) {
         repository.delete(record)
     }
 }

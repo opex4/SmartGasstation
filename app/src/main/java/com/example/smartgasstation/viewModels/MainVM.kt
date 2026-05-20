@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.example.smartgasstation.data.RefuelRecordEntity
+import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.domain.usecase.ClearHistoryUseCase
 import com.example.smartgasstation.domain.usecase.DeleteRefuelUseCase
 import com.example.smartgasstation.domain.usecase.ExportToPdfUseCase
@@ -38,16 +38,27 @@ class MainVM @Inject constructor(
     private val coroutineManager: CoroutineManager
 ) : ViewModel() {
 
-    val refuelRecords: LiveData<List<RefuelRecordEntity>> = getRefuelRecordsUseCase()
+    private var _refuelRecords = MutableLiveData<List<RefuelRecord>>(emptyList())
+    val refuelRecords: LiveData<List<RefuelRecord>> = _refuelRecords
+
+    init {
+        fetchRecords()
+    }
+
+    fun fetchRecords(){
+        viewModelScope.launch{
+            _refuelRecords.value = getRefuelRecordsUseCase()
+        }
+    }
 
     private val _progress = MutableLiveData<Int>()
     val progress: LiveData<Int> = _progress
 
-    val lastOdometer: LiveData<Double?> = refuelRecords.map { list ->
+    val lastOdometer: LiveData<Double?> = _refuelRecords.map { list ->
         if (list.isEmpty()) null else list.last().odometer
     }
 
-    val avgConsumption: LiveData<Double?> = refuelRecords.map { list ->
+    val avgConsumption: LiveData<Double?> = _refuelRecords.map { list ->
         if (list.size < 2) {
             null
         } else {
@@ -57,21 +68,24 @@ class MainVM @Inject constructor(
         }
     }
 
-    fun deleteRefuelRecord(record: RefuelRecordEntity) {
+    fun deleteRefuelRecord(record: RefuelRecord) {
         viewModelScope.launch {
             deleteRefuelUseCase(record)
+            fetchRecords()
         }
     }
 
-    fun updateRefuelRecord(record: RefuelRecordEntity, fuelAmount: Double, odometer: Double) {
+    fun updateRefuelRecord(record: RefuelRecord, fuelAmount: Double, odometer: Double) {
         viewModelScope.launch {
             updateRefuelUseCase(record, fuelAmount, odometer)
+            fetchRecords()
         }
     }
 
     fun clearRefuelHistory() {
         viewModelScope.launch {
             clearHistoryUseCase()
+            fetchRecords()
         }
     }
 
@@ -96,19 +110,21 @@ class MainVM @Inject constructor(
     fun loadFromTxt() {
         viewModelScope.launch(Dispatchers.IO) {
             importFromTxtUseCase()
+            fetchRecords()
         }
     }
 
     fun loadFromXls() {
         viewModelScope.launch(Dispatchers.IO) {
             importFromXlsUseCase()
+            fetchRecords()
         }
     }
 
     fun startThreadExport() {
         _progress.postValue(0)
         viewModelScope.launch(Dispatchers.IO) {
-            val records = refuelRecords.value ?: return@launch
+            val records = _refuelRecords.value ?: return@launch
             threadManager.startSequentialExport(
                 records = records,
                 onProgress = { progress -> _progress.postValue(progress) },
@@ -123,7 +139,7 @@ class MainVM @Inject constructor(
     fun startCoroutineExport() {
         _progress.postValue(0)
         viewModelScope.launch {
-            val records = refuelRecords.value ?: return@launch
+            val records = _refuelRecords.value ?: return@launch
             coroutineManager.startSequentialExport(
                 records = records,
                 onProgress = { progress -> _progress.postValue(progress) },

@@ -1,15 +1,12 @@
 package com.example.smartgasstation.domain.usecase
 
-import com.example.smartgasstation.data.RefuelRepository
-import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
-import javax.inject.Inject
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 
-class ExportToTxtUseCase @Inject constructor(
-    private val repository: RefuelRepository,
-    private val fileManager: RefuelRecordsFileManager
+class ExportToTxtUseCase(
+    private val repository: IRefuelRepository
 ) {
     suspend operator fun invoke() {
         val records = repository.getAllList()
-        fileManager.saveToTxt(records, "RefuelHistoryTxt")
+        repository.saveToTxt(records, "RefuelHistoryTxt")
     }
 }

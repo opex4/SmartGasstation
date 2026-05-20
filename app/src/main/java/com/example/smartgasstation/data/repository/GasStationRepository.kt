@@ -1,19 +1,21 @@
 package com.example.smartgasstation.data.repository
 
-import com.example.smartgasstation.data.api.BestStationResponse
 import com.example.smartgasstation.data.api.GasStationApi
+import com.example.smartgasstation.domain.entity.BestStation
+import com.example.smartgasstation.domain.repository.IGasStationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
 
-class GasStationRepository @Inject constructor(private val api: GasStationApi) {
+class GasStationRepository @Inject constructor(private val api: GasStationApi) :
+    IGasStationRepository {
 
-    suspend fun findBestStation(
+    override suspend fun findBestStation(
         fuelType: String,
         fuelAmount: Double,
         consumption: Double
-    ): Result<BestStationResponse> = withContext(Dispatchers.IO) {
+    ): Result<BestStation> = withContext(Dispatchers.IO) {
         try {
             val idsResponse = api.getStationIds(fuelType)
             if (!idsResponse.isSuccessful || idsResponse.body() == null) {

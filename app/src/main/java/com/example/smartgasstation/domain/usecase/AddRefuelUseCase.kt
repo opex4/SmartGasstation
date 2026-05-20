@@ -1,11 +1,10 @@
 package com.example.smartgasstation.domain.usecase
 
-import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.data.RefuelRepository
-import javax.inject.Inject
+import com.example.smartgasstation.domain.entity.RefuelRecord
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 
-class AddRefuelUseCase @Inject constructor(
-    private val repository: RefuelRepository
+class AddRefuelUseCase(
+    private val repository: IRefuelRepository
 ) {
     suspend operator fun invoke(fuelAmount: Double, odometer: Double) {
         if (fuelAmount <= 0) throw Exception("Количество топлива должно быть больше 0")
@@ -18,6 +17,6 @@ class AddRefuelUseCase @Inject constructor(
                 throw Exception("Пробег текущей записи должен быть больше предыдущей записи")
             }
         }
-        repository.insert(RefuelRecordEntity(fuelAmount = fuelAmount, odometer = odometer))
+        repository.insert(RefuelRecord(fuelAmount = fuelAmount, odometer = odometer))
     }
 }

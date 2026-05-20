@@ -1,19 +1,19 @@
 package com.example.smartgasstation.multithreading
 
-import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
+import com.example.smartgasstation.domain.entity.RefuelRecord
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 class ThreadManager @Inject constructor(
-    private val fileManager: RefuelRecordsFileManager
+    private val repository: IRefuelRepository
 ) {
     private var threadTxt: Thread? = null
     private var threadXls: Thread? = null
     private val isCancelled = AtomicBoolean(false)
 
     fun startSequentialExport(
-        records: List<RefuelRecordEntity>,
+        records: List<RefuelRecord>,
         onProgress: (Int) -> Unit,
         onError: (Throwable) -> Unit = {}
     ) {
@@ -24,16 +24,16 @@ class ThreadManager @Inject constructor(
                 onProgress(10)
                 if (isCancelled.get()) return@Thread
 
-                fileManager.saveToTxt(records, "RefuelHistoryTxt")
+                repository.saveToTxt(records, "RefuelHistoryTxt")
                 if (isCancelled.get()) return@Thread
 
-                val loaded = fileManager.loadFromTxt("RefuelHistoryTxt")
+                val loaded = repository.loadFromTxt("RefuelHistoryTxt")
                 onProgress(50)
 
                 threadXls = Thread {
                     try {
                         if (isCancelled.get()) return@Thread
-                        fileManager.saveToXls(loaded, "RefuelHistoryXls")
+                        repository.saveToXls(loaded, "RefuelHistoryXls")
                         onProgress(100)
                     } catch (e: Exception) {
                         onError(e)

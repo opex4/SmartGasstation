@@ -1,13 +1,12 @@
 package com.example.smartgasstation.domain.usecase
 
-import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.data.RefuelRepository
-import javax.inject.Inject
+import com.example.smartgasstation.domain.entity.RefuelRecord
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 
-class UpdateRefuelUseCase @Inject constructor(
-    private val repository: RefuelRepository
+class UpdateRefuelUseCase(
+    private val repository: IRefuelRepository
 ) {
-    suspend operator fun invoke(record: RefuelRecordEntity, fuelAmount: Double, odometer: Double) {
+    suspend operator fun invoke(record: RefuelRecord, fuelAmount: Double, odometer: Double) {
         if (fuelAmount <= 0) throw Exception("Количество топлива должно быть больше 0")
         if (odometer < 0) throw Exception("Пробег не может быть отрицательным")
 

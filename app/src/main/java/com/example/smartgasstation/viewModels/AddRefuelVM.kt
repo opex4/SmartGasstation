@@ -1,10 +1,12 @@
 package com.example.smartgasstation.viewModels
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.example.smartgasstation.data.api.BestStationResponse
+import com.example.smartgasstation.domain.entity.BestStation
+import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.domain.usecase.AddRefuelUseCase
 import com.example.smartgasstation.domain.usecase.FindBestStationUseCase
 import com.example.smartgasstation.domain.usecase.GetRefuelRecordsUseCase
@@ -19,16 +21,23 @@ import javax.inject.Inject
 class AddRefuelVM @Inject constructor(
     private val addRefuelUseCase: AddRefuelUseCase,
     private val findBestStationUseCase: FindBestStationUseCase,
-    getRefuelRecordsUseCase: GetRefuelRecordsUseCase
+    private val getRefuelRecordsUseCase: GetRefuelRecordsUseCase
 ) : ViewModel() {
 
-    private val allRecords = getRefuelRecordsUseCase()
+    private var _allRecords = MutableLiveData<List<RefuelRecord>>(emptyList())
+    val allRecords: LiveData<List<RefuelRecord>> = _allRecords
 
-    val lastOdometer: LiveData<Double?> = allRecords.map { list ->
+    init {
+        viewModelScope.launch{
+            _allRecords.value = getRefuelRecordsUseCase()
+        }
+    }
+
+    val lastOdometer: LiveData<Double?> = _allRecords.map { list ->
         if (list.isEmpty()) null else list.last().odometer
     }
 
-    val avgConsumption: LiveData<Double?> = allRecords.map { list ->
+    val avgConsumption: LiveData<Double?> = _allRecords.map { list ->
         if (list.size < 2) {
             null
         } else {
@@ -79,7 +88,7 @@ class AddRefuelVM @Inject constructor(
     sealed class UiState {
         object Idle : UiState()
         object Loading : UiState()
-        data class Success(val response: BestStationResponse) : UiState()
+        data class Success(val response: BestStation) : UiState()
         data class Error(val message: String) : UiState()
     }
 

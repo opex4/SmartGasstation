@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartgasstation.adapters.MainAdapter
 import com.example.smartgasstation.adapters.SwipeToActionCallback
-import com.example.smartgasstation.data.RefuelRecordEntity
+import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.viewModels.MainVM
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,6 +38,11 @@ class MainActivity : AppCompatActivity() {
     private var dialogProgressBar: ProgressBar? = null
     private var startButton: Button? = null
     private var cancelButton: Button? = null
+
+    override fun onStart() {
+        super.onStart()
+        mainVM.fetchRecords()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -270,7 +275,7 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun updateHistoryDisplay(updatedList: List<RefuelRecordEntity>) {
+    private fun updateHistoryDisplay(updatedList: List<RefuelRecord>) {
         if (!::adapter.isInitialized) {
             adapter = MainAdapter(updatedList)
             recyclerView.layoutManager = GridLayoutManager(this, 3, GridLayoutManager.HORIZONTAL, false)

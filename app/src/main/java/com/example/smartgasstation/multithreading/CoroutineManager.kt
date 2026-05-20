@@ -1,8 +1,8 @@
 package com.example.smartgasstation.multithreading
 
 import android.util.Log
-import com.example.smartgasstation.data.RefuelRecordEntity
-import com.example.smartgasstation.filemanager.RefuelRecordsFileManager
+import com.example.smartgasstation.domain.entity.RefuelRecord
+import com.example.smartgasstation.domain.repository.IRefuelRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CoroutineManager @Inject constructor(
-    private val fileManager: RefuelRecordsFileManager
+    private val repository: IRefuelRepository
 ) {
     private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         Log.e("CoroutineManager", "Ошибка в корутине: ${exception.message}", exception)
@@ -23,19 +23,19 @@ class CoroutineManager @Inject constructor(
     private var job: Job? = null
 
     fun startSequentialExport(
-        records: List<RefuelRecordEntity>,
+        records: List<RefuelRecord>,
         onProgress: (Int) -> Unit,
         onError: (Throwable) -> Unit = {}
     ) {
         job = ioScope.launch {
             try {
                 onProgress(10)
-                fileManager.saveToTxt(records, "RefuelHistoryTxt")
-                val result = fileManager.loadFromTxt("RefuelHistoryTxt")
+                repository.saveToTxt(records, "RefuelHistoryTxt")
+                val result = repository.loadFromTxt("RefuelHistoryTxt")
                 onProgress(50)
 
                 withContext(Dispatchers.Default) {
-                    fileManager.saveToXls(result, "RefuelHistoryXls")
+                    repository.saveToXls(result, "RefuelHistoryXls")
                     onProgress(100)
                 }
             } catch (e: Exception) {

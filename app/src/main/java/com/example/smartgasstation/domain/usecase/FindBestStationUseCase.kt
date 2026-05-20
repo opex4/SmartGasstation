@@ -1,17 +1,16 @@
 package com.example.smartgasstation.domain.usecase
 
-import com.example.smartgasstation.data.api.BestStationResponse
-import com.example.smartgasstation.data.repository.GasStationRepository
-import javax.inject.Inject
+import com.example.smartgasstation.domain.entity.BestStation
+import com.example.smartgasstation.domain.repository.IGasStationRepository
 
-class FindBestStationUseCase @Inject constructor(
-    private val repository: GasStationRepository
+class FindBestStationUseCase(
+    private val repository: IGasStationRepository
 ) {
     suspend operator fun invoke(
         fuelType: String,
         fuelAmount: Double,
         consumption: Double
-    ): Result<BestStationResponse> {
+    ): Result<BestStation> {
         return repository.findBestStation(fuelType, fuelAmount, consumption)
     }
 }
