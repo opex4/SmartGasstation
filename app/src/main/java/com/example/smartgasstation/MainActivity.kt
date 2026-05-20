@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
         mainVM.avgConsumption.observe(this) { avg ->
             if (avg == null) {
-                consumptionText.text = "Нет данных о заправках"
+                consumptionText.text = "Недостаточно данных для расчёта среднего расхода"
             } else {
                 consumptionText.text = "Средний расход: %.2f л/100км".format(avg)
             }

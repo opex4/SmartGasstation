@@ -3,7 +3,7 @@ package com.example.smartgasstation.di
 import android.content.Context
 import com.example.smartgasstation.data.AppDatabase
 import com.example.smartgasstation.data.RefuelDao
-import com.example.smartgasstation.data.RefuelRepositoryImpl
+import com.example.smartgasstation.data.repository.RefuelRepository
 import com.example.smartgasstation.data.api.GasStationApi
 import com.example.smartgasstation.data.filemanager.RefuelRecordsFileManager
 import com.example.smartgasstation.data.repository.GasStationRepository
@@ -23,7 +23,7 @@ object DataModule {
     @Provides
     @Singleton
     fun provideRefuelRepository(dao: RefuelDao, fileManager: RefuelRecordsFileManager): IRefuelRepository {
-        return RefuelRepositoryImpl(dao, fileManager)
+        return RefuelRepository(dao, fileManager)
     }
 
     @Provides

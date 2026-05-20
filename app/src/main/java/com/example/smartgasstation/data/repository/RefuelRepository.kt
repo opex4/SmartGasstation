@@ -1,11 +1,13 @@
-package com.example.smartgasstation.data
+package com.example.smartgasstation.data.repository
 
+import com.example.smartgasstation.data.RefuelDao
+import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.data.filemanager.RefuelRecordsFileManager
 import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.domain.repository.IRefuelRepository
 import javax.inject.Inject
 
-class RefuelRepositoryImpl @Inject constructor(
+class RefuelRepository @Inject constructor(
     private val dao: RefuelDao,
     private val fileManager: RefuelRecordsFileManager
 ): IRefuelRepository {
@@ -63,7 +65,7 @@ class RefuelRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun refuelRecordToData(record: RefuelRecord):RefuelRecordEntity{
+    private fun refuelRecordToData(record: RefuelRecord): RefuelRecordEntity {
         return RefuelRecordEntity(
             id = record.id,
             fuelAmount = record.fuelAmount,
