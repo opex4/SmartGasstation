@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,7 +29,7 @@ class AddRefuelVM @Inject constructor(
     val allRecords: LiveData<List<RefuelRecord>> = _allRecords
 
     init {
-        viewModelScope.launch{
+        viewModelScope.launch {
             _allRecords.value = getRefuelRecordsUseCase()
         }
     }
@@ -45,6 +46,11 @@ class AddRefuelVM @Inject constructor(
             val totalDistance = list.last().odometer - list.first().odometer
             (totalFuel / totalDistance) * 100
         }
+    }
+
+    val avgConsumptionText: LiveData<String> = avgConsumption.map { avg ->
+        if (avg != null && avg > 0) String.format(Locale.US, "%.2f", avg)
+        else "10.0"
     }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)

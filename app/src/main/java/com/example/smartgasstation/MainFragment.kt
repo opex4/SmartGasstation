@@ -9,20 +9,19 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuProvider
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
 import com.example.smartgasstation.adapters.MainAdapter
 import com.example.smartgasstation.adapters.SwipeToActionCallback
+import com.example.smartgasstation.databinding.FragmentMainBinding
 import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.viewModels.MainVM
 import com.google.android.material.textfield.TextInputEditText
@@ -31,13 +30,11 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainFragment : Fragment() {
 
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var consumptionText: TextView
+    private var _binding: FragmentMainBinding? = null
+    private val binding get() = _binding!!
+
     private val mainVM: MainVM by viewModels()
     private lateinit var adapter: MainAdapter
-    private lateinit var filesButton: ImageButton
-    private lateinit var coroutineButton: Button
-    private lateinit var threadButton: Button
 
     private var dialogProgressBar: ProgressBar? = null
     private var startButton: Button? = null
@@ -47,15 +44,28 @@ class MainFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_main, container, false)
+    ): View {
+        _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false)
+        binding.viewModel = mainVM
+        binding.lifecycleOwner = viewLifecycleOwner
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupMenu()
-        initializeViews(view)
+        initializeViews()
         initObserves()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mainVM.fetchRecords()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     private fun setupMenu() {
@@ -86,14 +96,6 @@ class MainFragment : Fragment() {
     private fun initObserves() {
         mainVM.refuelRecords.observe(viewLifecycleOwner) { records ->
             updateHistoryDisplay(records)
-        }
-
-        mainVM.avgConsumption.observe(viewLifecycleOwner) { avg ->
-            if (avg == null) {
-                consumptionText.text = "Недостаточно данных для расчёта среднего расхода"
-            } else {
-                consumptionText.text = "Средний расход: %.2f л/100км".format(avg)
-            }
         }
 
         mainVM.progress.observe(viewLifecycleOwner) { value ->
@@ -137,7 +139,7 @@ class MainFragment : Fragment() {
                     .show()
             }
         )
-        ItemTouchHelper(callback).attachToRecyclerView(recyclerView)
+        ItemTouchHelper(callback).attachToRecyclerView(binding.mainRecyclerView)
     }
 
     private fun showEditDialog(position: Int) {
@@ -185,21 +187,17 @@ class MainFragment : Fragment() {
             .show()
     }
 
-    private fun initializeViews(view: View) {
-        recyclerView = view.findViewById(R.id.main_recycler_view)
+    private fun initializeViews() {
         if (::adapter.isInitialized) {
-            recyclerView.layoutManager = GridLayoutManager(requireContext(), 3, GridLayoutManager.HORIZONTAL, false)
-            recyclerView.adapter = adapter
+            binding.mainRecyclerView.layoutManager =
+                GridLayoutManager(requireContext(), 3, GridLayoutManager.HORIZONTAL, false)
+            binding.mainRecyclerView.adapter = adapter
             setupSwipeCallbacks()
         }
-        consumptionText = view.findViewById(R.id.main_activity_consumption_tv)
-        consumptionText.text = "Нет данных о заправках"
 
-        filesButton = view.findViewById(R.id.main_activity_files_btn)
-        filesButton.setOnClickListener { saveAndLoadFiles() }
+        binding.mainActivityFilesBtn.setOnClickListener { saveAndLoadFiles() }
 
-        threadButton = view.findViewById(R.id.thread_btn)
-        threadButton.setOnClickListener {
+        binding.threadBtn.setOnClickListener {
             val v = layoutInflater.inflate(R.layout.dialog_export_progress, null)
             dialogProgressBar = v.findViewById(R.id.exportProgress)
             val dialog = AlertDialog.Builder(requireContext())
@@ -225,8 +223,7 @@ class MainFragment : Fragment() {
             }
         }
 
-        coroutineButton = view.findViewById(R.id.coroutine_btn)
-        coroutineButton.setOnClickListener {
+        binding.coroutineBtn.setOnClickListener {
             val v = layoutInflater.inflate(R.layout.dialog_export_progress, null)
             dialogProgressBar = v.findViewById(R.id.exportProgress)
             val dialog = AlertDialog.Builder(requireContext())
@@ -293,8 +290,9 @@ class MainFragment : Fragment() {
     private fun updateHistoryDisplay(updatedList: List<RefuelRecord>) {
         if (!::adapter.isInitialized) {
             adapter = MainAdapter(updatedList)
-            recyclerView.layoutManager = GridLayoutManager(requireContext(), 3, GridLayoutManager.HORIZONTAL, false)
-            recyclerView.adapter = adapter
+            binding.mainRecyclerView.layoutManager =
+                GridLayoutManager(requireContext(), 3, GridLayoutManager.HORIZONTAL, false)
+            binding.mainRecyclerView.adapter = adapter
             setupSwipeCallbacks()
         } else {
             adapter.updateData(updatedList)

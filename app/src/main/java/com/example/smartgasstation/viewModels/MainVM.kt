@@ -45,8 +45,8 @@ class MainVM @Inject constructor(
         fetchRecords()
     }
 
-    fun fetchRecords(){
-        viewModelScope.launch{
+    fun fetchRecords() {
+        viewModelScope.launch {
             _refuelRecords.value = getRefuelRecordsUseCase()
         }
     }
@@ -66,6 +66,11 @@ class MainVM @Inject constructor(
             val totalDistance = list.last().odometer - list.first().odometer
             (totalFuel / totalDistance) * 100
         }
+    }
+
+    val avgConsumptionText: LiveData<String> = avgConsumption.map { avg ->
+        if (avg == null) "Недостаточно данных для расчёта среднего расхода"
+        else "Средний расход: %.2f л/100км".format(avg)
     }
 
     fun deleteRefuelRecord(record: RefuelRecord) {
