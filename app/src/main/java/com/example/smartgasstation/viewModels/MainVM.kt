@@ -51,6 +51,9 @@ class MainVM @Inject constructor(
         }
     }
 
+    private val _updateError = MutableLiveData<String?>()
+    val updateError: LiveData<String?> = _updateError
+
     private val _progress = MutableLiveData<Int>()
     val progress: LiveData<Int> = _progress
 
@@ -82,9 +85,17 @@ class MainVM @Inject constructor(
 
     fun updateRefuelRecord(record: RefuelRecord, fuelAmount: Double, odometer: Double) {
         viewModelScope.launch {
-            updateRefuelUseCase(record, fuelAmount, odometer)
-            fetchRecords()
+            try {
+                updateRefuelUseCase(record, fuelAmount, odometer)
+                fetchRecords()
+            } catch (e: Exception) {
+                _updateError.postValue(e.message)
+            }
         }
+    }
+
+    fun clearUpdateError() {
+        _updateError.value = null
     }
 
     fun clearRefuelHistory() {

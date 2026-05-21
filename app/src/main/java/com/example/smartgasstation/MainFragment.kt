@@ -98,6 +98,13 @@ class MainFragment : Fragment() {
             updateHistoryDisplay(records)
         }
 
+        mainVM.updateError.observe(viewLifecycleOwner) { message ->
+            if (!message.isNullOrEmpty()) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                mainVM.clearUpdateError()
+            }
+        }
+
         mainVM.progress.observe(viewLifecycleOwner) { value ->
             when (value) {
                 100 -> {
@@ -169,8 +176,6 @@ class MainFragment : Fragment() {
                         dialog.dismiss()
                     } catch (e: NumberFormatException) {
                         Toast.makeText(requireContext(), "Введите корректные числа", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), e.message, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
