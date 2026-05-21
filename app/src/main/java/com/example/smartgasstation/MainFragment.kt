@@ -58,11 +58,6 @@ class MainFragment : Fragment() {
         initObserves()
     }
 
-    override fun onStart() {
-        super.onStart()
-        mainVM.fetchRecords()
-    }
-
     private fun setupMenu() {
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -192,6 +187,11 @@ class MainFragment : Fragment() {
 
     private fun initializeViews(view: View) {
         recyclerView = view.findViewById(R.id.main_recycler_view)
+        if (::adapter.isInitialized) {
+            recyclerView.layoutManager = GridLayoutManager(requireContext(), 3, GridLayoutManager.HORIZONTAL, false)
+            recyclerView.adapter = adapter
+            setupSwipeCallbacks()
+        }
         consumptionText = view.findViewById(R.id.main_activity_consumption_tv)
         consumptionText.text = "Нет данных о заправках"
 
