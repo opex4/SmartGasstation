@@ -1,12 +1,15 @@
 package com.example.smartgasstation
 
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.smartgasstation.viewModels.AddRefuelVM
 import dagger.hilt.android.AndroidEntryPoint
@@ -15,7 +18,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 @AndroidEntryPoint
-class AddRefuelActivity : AppCompatActivity() {
+class AddRefuelFragment : Fragment() {
 
     private lateinit var fuelTypeInput: EditText
     private lateinit var fuelAmountInput: EditText
@@ -29,34 +32,41 @@ class AddRefuelActivity : AppCompatActivity() {
 
     private val addRefuelVM: AddRefuelVM by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_add_refuel)
-        initializeViews()
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_add_refuel, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initializeViews(view)
         setupClickListeners()
         observeUiState()
         observeSaveState()
         observeConsumption()
     }
 
-    private fun initializeViews() {
-        cancelSearchButton = findViewById(R.id.cancelSearchButton)
+    private fun initializeViews(view: View) {
+        cancelSearchButton = view.findViewById(R.id.cancelSearchButton)
         cancelSearchButton.isEnabled = false
-        fuelTypeInput = findViewById(R.id.fuelTypeInput)
-        fuelAmountInput = findViewById(R.id.fuelAmountInput)
-        fuelConsumptionInput = findViewById(R.id.fuelConsumptionInput)
-        odometerInput = findViewById(R.id.odometerInput)
-        resultText = findViewById(R.id.resultText)
-        calculateButton = findViewById(R.id.calculateButton)
-        refuelButton = findViewById(R.id.refuelButton)
-        returnButton = findViewById(R.id.returnButton)
+        fuelTypeInput = view.findViewById(R.id.fuelTypeInput)
+        fuelAmountInput = view.findViewById(R.id.fuelAmountInput)
+        fuelConsumptionInput = view.findViewById(R.id.fuelConsumptionInput)
+        odometerInput = view.findViewById(R.id.odometerInput)
+        resultText = view.findViewById(R.id.resultText)
+        calculateButton = view.findViewById(R.id.calculateButton)
+        refuelButton = view.findViewById(R.id.refuelButton)
+        returnButton = view.findViewById(R.id.returnButton)
         fuelConsumptionInput.setText("10.0")
     }
 
     private fun setupClickListeners() {
         calculateButton.setOnClickListener { calculateBestGasStation() }
         refuelButton.setOnClickListener { recordRefuel() }
-        returnButton.setOnClickListener { finish() }
+        returnButton.setOnClickListener { parentFragmentManager.popBackStack() }
         cancelSearchButton.setOnClickListener {
             addRefuelVM.cancelSearch()
             resultText.text = "Запрос отменён"
@@ -66,7 +76,7 @@ class AddRefuelActivity : AppCompatActivity() {
     }
 
     private fun observeConsumption() {
-        addRefuelVM.avgConsumption.observe(this) { avg ->
+        addRefuelVM.avgConsumption.observe(viewLifecycleOwner) { avg ->
             updateFuelConsumptionField(avg ?: 0.0)
         }
     }
@@ -93,7 +103,7 @@ class AddRefuelActivity : AppCompatActivity() {
     }
 
     private fun observeUiState() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             addRefuelVM.uiState.collectLatest { state ->
                 when (state) {
                     is AddRefuelVM.UiState.Loading -> {
@@ -126,12 +136,12 @@ class AddRefuelActivity : AppCompatActivity() {
     }
 
     private fun observeSaveState() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             addRefuelVM.saveState.collectLatest { state ->
                 when (state) {
                     is AddRefuelVM.SaveState.Success -> {
-                        Toast.makeText(this@AddRefuelActivity, "Заправка записана в историю", Toast.LENGTH_SHORT).show()
-                        finish()
+                        Toast.makeText(requireContext(), "Заправка записана в историю", Toast.LENGTH_SHORT).show()
+                        parentFragmentManager.popBackStack()
                     }
                     is AddRefuelVM.SaveState.Error -> {
                         resultText.text = state.message
