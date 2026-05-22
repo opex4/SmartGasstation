@@ -6,9 +6,8 @@ import com.example.smartgasstation.domain.repository.IGasStationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
-class GasStationRepository @Inject constructor(private val api: GasStationApi) :
+class GasStationRepository(private val api: GasStationApi) :
     IGasStationRepository {
 
     override suspend fun findBestStation(

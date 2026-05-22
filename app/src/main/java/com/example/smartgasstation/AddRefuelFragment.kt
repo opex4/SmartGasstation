@@ -28,7 +28,7 @@ class AddRefuelFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_add_refuel, container, false)
+        _binding = FragmentAddRefuelBinding.inflate(inflater, container, false)
         binding.viewModel = addRefuelVM
         binding.lifecycleOwner = viewLifecycleOwner
         return binding.root

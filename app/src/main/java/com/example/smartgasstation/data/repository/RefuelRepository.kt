@@ -5,9 +5,8 @@ import com.example.smartgasstation.data.RefuelRecordEntity
 import com.example.smartgasstation.data.filemanager.RefuelRecordsFileManager
 import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.domain.repository.IRefuelRepository
-import javax.inject.Inject
 
-class RefuelRepository @Inject constructor(
+class RefuelRepository(
     private val dao: RefuelDao,
     private val fileManager: RefuelRecordsFileManager
 ): IRefuelRepository {
