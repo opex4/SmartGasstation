@@ -1,4 +1,4 @@
-package com.example.smartgasstation
+package com.example.smartgasstation.presentation
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -13,18 +13,17 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuProvider
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
-import com.example.smartgasstation.adapters.MainAdapter
-import com.example.smartgasstation.adapters.SwipeToActionCallback
+import com.example.smartgasstation.R
+import com.example.smartgasstation.presentation.adapters.MainAdapter
+import com.example.smartgasstation.presentation.adapters.SwipeToActionCallback
 import com.example.smartgasstation.databinding.FragmentMainBinding
 import com.example.smartgasstation.domain.entity.RefuelRecord
-import com.example.smartgasstation.viewModels.MainVM
+import com.example.smartgasstation.presentation.viewModels.MainVM
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 

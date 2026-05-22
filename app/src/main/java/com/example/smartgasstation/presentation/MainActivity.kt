@@ -1,4 +1,4 @@
-package com.example.smartgasstation
+package com.example.smartgasstation.presentation
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

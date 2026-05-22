@@ -1,4 +1,4 @@
-package com.example.smartgasstation.adapters
+package com.example.smartgasstation.presentation.adapters
 
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView

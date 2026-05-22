@@ -1,4 +1,4 @@
-package com.example.smartgasstation.adapters
+package com.example.smartgasstation.presentation.adapters
 
 import android.view.LayoutInflater
 import android.view.View

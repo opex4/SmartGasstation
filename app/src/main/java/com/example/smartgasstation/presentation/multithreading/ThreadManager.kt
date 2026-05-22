@@ -1,4 +1,4 @@
-package com.example.smartgasstation.multithreading
+package com.example.smartgasstation.presentation.multithreading
 
 import com.example.smartgasstation.domain.entity.RefuelRecord
 import com.example.smartgasstation.domain.repository.IRefuelRepository

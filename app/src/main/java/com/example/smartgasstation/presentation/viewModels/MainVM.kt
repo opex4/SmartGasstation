@@ -1,4 +1,4 @@
-package com.example.smartgasstation.viewModels
+package com.example.smartgasstation.presentation.viewModels
 
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -16,8 +16,8 @@ import com.example.smartgasstation.domain.usecase.GetRefuelRecordsUseCase
 import com.example.smartgasstation.domain.usecase.ImportFromTxtUseCase
 import com.example.smartgasstation.domain.usecase.ImportFromXlsUseCase
 import com.example.smartgasstation.domain.usecase.UpdateRefuelUseCase
-import com.example.smartgasstation.multithreading.CoroutineManager
-import com.example.smartgasstation.multithreading.ThreadManager
+import com.example.smartgasstation.presentation.multithreading.CoroutineManager
+import com.example.smartgasstation.presentation.multithreading.ThreadManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

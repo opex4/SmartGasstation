@@ -1,16 +1,15 @@
-package com.example.smartgasstation
+package com.example.smartgasstation.presentation
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.smartgasstation.databinding.FragmentAddRefuelBinding
-import com.example.smartgasstation.viewModels.AddRefuelVM
+import com.example.smartgasstation.presentation.viewModels.AddRefuelVM
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

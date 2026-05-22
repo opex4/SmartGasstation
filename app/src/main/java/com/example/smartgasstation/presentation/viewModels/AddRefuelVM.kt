@@ -1,4 +1,4 @@
-package com.example.smartgasstation.viewModels
+package com.example.smartgasstation.presentation.viewModels
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

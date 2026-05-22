@@ -1,4 +1,4 @@
-package com.example.smartgasstation.multithreading
+package com.example.smartgasstation.presentation.multithreading
 
 import android.util.Log
 import com.example.smartgasstation.domain.entity.RefuelRecord
